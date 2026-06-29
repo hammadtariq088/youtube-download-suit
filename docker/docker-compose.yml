@@ -1,0 +1,82 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: yds
+      POSTGRES_PASSWORD: yds_secret
+      POSTGRES_DB: yds
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yds"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://yds:yds_secret@postgres:5432/yds
+      REDIS_URL: redis://redis:6379
+      R2_ENDPOINT: ${R2_ENDPOINT}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      R2_BUCKET_NAME: ${R2_BUCKET_NAME}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-minimum-32-chars-long!!}
+      JWT_EXPIRY_SECONDS: 86400
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@yds.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123456}
+      CORS_ORIGIN: http://localhost:5173
+      WORKER_API_KEY: ${WORKER_API_KEY:-dev-worker-key}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      NODE_ENV: development
+      WORKER_ID: worker-1
+      WORKER_CONCURRENCY: 3
+      TEMP_DOWNLOAD_DIR: /tmp/yds-downloads
+      DATABASE_URL: postgresql://yds:yds_secret@postgres:5432/yds
+      REDIS_URL: redis://redis:6379
+      R2_ENDPOINT: ${R2_ENDPOINT}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      R2_BUCKET_NAME: ${R2_BUCKET_NAME}
+    volumes:
+      - worker_temp:/tmp/yds-downloads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  worker_temp:

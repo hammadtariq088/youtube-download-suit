@@ -1,0 +1,36 @@
+{
+  "name": "youtube-download-suit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-grade YouTube Downloader SaaS",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "typecheck": "turbo typecheck",
+    "clean": "turbo clean",
+    "format": "prettier --write \"**/*.{ts,tsx,json,css,md}\"",
+    "migrate:generate": "cd backend && drizzle-kit generate",
+    "migrate:push": "cd backend && drizzle-kit push",
+    "migrate:migrate": "cd backend && drizzle-kit migrate",
+    "migrate:check": "cd backend && cat drizzle.config.ts | head -5 && echo '---' && echo 'DATABASE_URL is:' && echo ${DATABASE_URL:-'<not set>'}"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "prettier": "^3.5.3",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "turbo": "^2.5.2",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "packageManager": "pnpm@10.15.0",
+  "pnpm": {
+    "overrides": {
+      "ioredis": "5.10.1"
+    }
+  }
+}

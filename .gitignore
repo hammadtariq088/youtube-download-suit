@@ -1,0 +1,43 @@
+node_modules/
+dist/
+build/
+.turbo/
+.next/
+
+# env
+.env
+.env.local
+.env.example
+.env.*.local
+
+backend/.env
+worker/.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temp
+tmp/
+temp/
+downloads/
+uploads/
+
+# Test coverage
+coverage/
+
+# Drizzle
+drizzle/meta/
+
+# PM2
+.pm2/
