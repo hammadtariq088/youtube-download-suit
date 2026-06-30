@@ -24,3 +24,11 @@ export const downloadRateLimiter = rateLimit({
   legacyHeaders: false,
   message: { success: false, error: "Too many download requests, please try again later.", code: "RATE_LIMITED" },
 });
+
+export const pollRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: "Too many requests, please try again later.", code: "RATE_LIMITED" },
+});

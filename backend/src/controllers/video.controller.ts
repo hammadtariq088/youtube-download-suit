@@ -5,9 +5,9 @@ import { db } from "../config/db";
 import { downloads, jobs } from "../db/schema";
 import { AppError } from "../middleware/error-handler";
 import { JobStatus } from "@yds/shared/types";
-import type { DownloadFormat, DownloadQuality, VideoInfo } from "@yds/shared/types";
+import type { DownloadFormat, DownloadQuality, VideoMetadataResult } from "@yds/shared/types";
 
-async function waitForVideoInfo(url: string, timeoutMs = 30000): Promise<VideoInfo> {
+async function waitForVideoInfo(url: string, timeoutMs = 120000): Promise<VideoMetadataResult> {
   const job = await videoInfoQueue.add(
     "video-info",
     { url },
@@ -20,24 +20,28 @@ async function waitForVideoInfo(url: string, timeoutMs = 30000): Promise<VideoIn
   );
 
   const result = await job.waitUntilFinished(videoInfoQueueEvents, timeoutMs);
-  return result as VideoInfo;
+  return result as VideoMetadataResult;
 }
 
 export const videoController = {
   async info(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { url } = req.body as { url: string };
-      const videoInfo = await waitForVideoInfo(url);
+      const { data: videoInfo, provider } = await waitForVideoInfo(url);
 
-      logger.info({ videoId: videoInfo.id, title: videoInfo.title }, "Video info fetched");
+      logger.info({ videoId: videoInfo.id, title: videoInfo.title, provider }, "Video info fetched");
 
-      res.json({ success: true, data: videoInfo });
+      res.json({ success: true, provider, data: videoInfo });
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
       logger.error({ err: msg }, "Failed to fetch video info");
 
       if (msg.includes("timed out") || msg.includes("timeout")) {
         return next(new AppError(504, "Video info fetch timed out. Worker may be busy.", "WORKER_TIMEOUT"));
+      }
+
+      if (msg.includes("Unable to fetch metadata") || msg.includes("BOTH_PROVIDERS_FAILED")) {
+        return next(new AppError(500, "Unable to fetch metadata.", "FETCH_FAILED"));
       }
 
       next(new AppError(502, "Failed to fetch video information. Worker may be offline.", "WORKER_OFFLINE"));

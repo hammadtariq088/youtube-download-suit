@@ -1,3 +1,10 @@
+export type MetadataProvider = "yt-dlp" | "apify";
+
+export interface VideoMetadataResult {
+  data: VideoInfo;
+  provider: MetadataProvider;
+}
+
 export enum JobStatus {
   PENDING = "pending",
   PROCESSING = "processing",

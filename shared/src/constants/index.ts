@@ -71,6 +71,7 @@ export const SUPPORTED_URL_PATTERNS = [
   /^https?:\/\/(www\.)?youtube\.com\/embed\/[\w-]{11}/,
   /^https?:\/\/(www\.)?youtube\.com\/shorts\/[\w-]{11}/,
   /^https?:\/\/(www\.)?youtube\.com\/playlist\?list=[\w-]+/,
+  /^https?:\/\/(www\.)?youtube\.com\/live\/[\w-]{11}/,
 ];
 
 export const MIME_TYPES: Record<string, string> = {

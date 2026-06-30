@@ -28,6 +28,12 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
     "--skip-download",
     "--no-playlist",
     "--restrict-filenames",
+    "--socket-timeout",
+    "30",
+    "--retries",
+    "3",
+    "--extractor-retries",
+    "3",
   ];
 
   const cookiePath = getCookiePath();

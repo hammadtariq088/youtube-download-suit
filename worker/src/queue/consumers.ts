@@ -6,13 +6,20 @@ import { getRedis } from "../config/redis";
 import { db } from "../config/db";
 import { logger } from "../config/logger";
 import { downloads, jobs, settings } from "../../../backend/src/db/schema";
-import { getVideoInfo, downloadVideo, updateYtdlp } from "../services/youtube.service";
+import { downloadVideo, updateYtdlp } from "../services/youtube.service";
 import { convertFile } from "../services/convert.service";
 import { uploadFile } from "../services/upload.service";
 import { cleanupSingleFile } from "../services/cleanup.service";
+import { createMetadataService } from "../services/metadata.service";
 import { env } from "../config/env";
 
-function createWorker(queueName: string, handler: (job: any) => Promise<void>): Worker {
+const metadataService = createMetadataService(
+  getRedis,
+  env.APIFY_TOKEN,
+  env.APIFY_ACTOR_ID || undefined,
+);
+
+function createWorker<T>(queueName: string, handler: (job: any) => Promise<T>): Worker {
   const worker = new Worker(queueName, handler, {
     connection: getRedis(),
     concurrency: env.WORKER_CONCURRENCY,
@@ -39,11 +46,11 @@ export const videoInfoWorker = createWorker(QUEUES.VIDEO_INFO, async (job) => {
   const { url } = job.data as { url: string };
   logger.info({ jobId: job.id, url }, "Processing video info request");
 
-  const info = await getVideoInfo(url);
+  const result = await metadataService.getVideoMetadata(url);
 
   await db.insert(downloads).values({
     url,
-    title: info.title,
+    title: result.data.title,
     format: "mp4",
     quality: "best",
     status: JobStatus.COMPLETED,
@@ -51,7 +58,7 @@ export const videoInfoWorker = createWorker(QUEUES.VIDEO_INFO, async (job) => {
 
   job.updateProgress(100);
 
-  return info;
+  return result;
 });
 
 export const downloadWorker = createWorker(QUEUES.DOWNLOAD, async (job) => {
