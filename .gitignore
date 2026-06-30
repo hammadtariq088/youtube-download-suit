@@ -7,11 +7,11 @@ build/
 # env
 .env
 .env.local
-.env.example
 .env.*.local
 
 backend/.env
 worker/.env
+docs/
 
 # IDE
 .vscode/
