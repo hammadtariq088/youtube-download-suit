@@ -1,10 +1,9 @@
 import { spawn, execSync } from "node:child_process";
-import { writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { env } from "../config/env";
 import { logger } from "../config/logger";
-import type { VideoInfo, DownloadFormat, DownloadQuality } from "@yds/shared/types";
+import type { VideoInfo } from "@yds/shared/types";
 
 function ensureTempDir(): void {
   if (!existsSync(env.TEMP_DOWNLOAD_DIR)) {
@@ -12,11 +11,25 @@ function ensureTempDir(): void {
   }
 }
 
-function getCookiePath(): string | null {
-  const activeProfile = process.env.COOKIE_PROFILE || "default";
-  const cookiePath = path.join(env.TEMP_DOWNLOAD_DIR, `cookies_${activeProfile}.txt`);
-  return existsSync(cookiePath) ? cookiePath : null;
+function addCookieArgs(args: string[]): void {
+  if (env.YT_COOKIES_FILE) {
+    if (existsSync(env.YT_COOKIES_FILE)) {
+      args.push("--cookies", env.YT_COOKIES_FILE);
+    } else {
+      logger.warn({ path: env.YT_COOKIES_FILE }, "YT_COOKIES_FILE not found, skipping");
+    }
+  }
+  if (env.YT_COOKIES_FROM_BROWSER) {
+    args.push("--cookies-from-browser", env.YT_COOKIES_FROM_BROWSER);
+  }
 }
+
+const COMMON_ARGS = [
+  "--extractor-args",
+  "youtubetab:skip=webpage",
+  "--user-agent",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+];
 
 export async function getVideoInfo(url: string): Promise<VideoInfo> {
   logger.info({ url }, "Fetching video info");
@@ -28,13 +41,20 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
     "--skip-download",
     "--no-playlist",
     "--restrict-filenames",
+    "--socket-timeout",
+    "30",
+    "--retries",
+    "10",
+    "--retry-sleep",
+    "5",
+    "--extractor-retries",
+    "10",
+    "--throttled-rate",
+    "100",
   ];
 
-  const cookiePath = getCookiePath();
-  if (cookiePath) {
-    args.push("--cookies", cookiePath);
-  }
-
+  addCookieArgs(args);
+  args.push(...COMMON_ARGS);
   args.push(url);
 
   return new Promise((resolve, reject) => {
@@ -60,19 +80,6 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
       if (code === 0) {
         try {
           const data = JSON.parse(stdout);
-          const formats = (data.formats || []).map((f: Record<string, unknown>) => ({
-            formatId: String(f.format_id || ""),
-            extension: String(f.ext || ""),
-            resolution: f.resolution ? String(f.resolution) : null,
-            filesize: f.filesize ? Number(f.filesize) : null,
-            filesizeApprox: f.filesize_approx ? Number(f.filesize_approx) : null,
-            bitrate: f.tbr ? Number(f.tbr) : null,
-            fps: f.fps ? Number(f.fps) : null,
-            codec: f.vcodec ? String(f.vcodec) : f.acodec ? String(f.acodec) : null,
-            hasAudio: Boolean(f.acodec && f.acodec !== "none"),
-            hasVideo: Boolean(f.vcodec && f.vcodec !== "none"),
-            isAudioOnly: Boolean(f.vcodec === "none" || !f.vcodec),
-          }));
 
           const videoInfo: VideoInfo = {
             id: String(data.id || ""),
@@ -84,8 +91,6 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
             uploaderUrl: String(data.uploader_url || ""),
             views: Number(data.view_count || 0),
             uploadDate: String(data.upload_date || ""),
-            formats,
-            qualities: generateQualityOptions(formats),
           };
 
           logger.info({ videoId: videoInfo.id, elapsed }, "Video info fetched successfully");
@@ -106,34 +111,8 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
   });
 }
 
-function generateQualityOptions(formats: Array<{ resolution: string | null; extension: string }>) {
-  const options: Array<{ label: string; value: string; formats: string[] }> = [
-    { label: "Best Available", value: "best", formats: [] },
-  ];
-
-  const qualities = ["1080", "720", "480", "360"];
-  for (const q of qualities) {
-    const matching = formats.filter((f) => {
-      if (!f.resolution) return false;
-      return f.resolution.includes(`${q}p`) || f.resolution.includes(`x${q}`);
-    });
-    if (matching.length > 0) {
-      options.push({
-        label: `${q}p`,
-        value: `${q}p`,
-        formats: matching.map((f) => f.extension),
-      });
-    }
-  }
-
-  return options;
-}
-
-export function buildYtdlArgs(
-  url: string,
-  format: DownloadFormat,
-  quality: DownloadQuality,
-): string[] {
+function buildYtdlArgs(url: string, format: string): string[] {
+  const maxSizeBytes = env.MAX_FILE_SIZE_MB * 1024 * 1024;
   const args = [
     "--no-warnings",
     "--no-playlist",
@@ -142,27 +121,25 @@ export function buildYtdlArgs(
     "after_move:filepath",
     "-o",
     `${env.TEMP_DOWNLOAD_DIR}/%(id)s.%(ext)s`,
+    "--retries",
+    "10",
+    "--retry-sleep",
+    "5",
+    "--extractor-retries",
+    "10",
+    "--throttled-rate",
+    "100",
+    "--max-filesize",
+    String(maxSizeBytes),
   ];
 
-  const cookiePath = getCookiePath();
-  if (cookiePath) {
-    args.push("--cookies", cookiePath);
-  }
+  addCookieArgs(args);
+  args.push(...COMMON_ARGS);
 
-  if (format === "mp3" || format === "m4a") {
-    args.push("-x", "--audio-format", format);
-    if (quality === "best") {
-      args.push("--audio-quality", "0");
-    }
+  if (format === "mp3") {
+    args.push("-x", "--audio-format", "mp3", "--audio-quality", "0");
   } else {
-    args.push("-f", "bestvideo+bestaudio/best");
-    if (format === "mkv") {
-      args.push("--merge-output-format", "mkv");
-    } else if (format === "webm") {
-      args.push("--merge-output-format", "webm");
-    } else {
-      args.push("--merge-output-format", "mp4");
-    }
+    args.push("-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b", "--merge-output-format", "mp4");
   }
 
   args.push(url);
@@ -171,14 +148,13 @@ export function buildYtdlArgs(
 
 export async function downloadVideo(
   url: string,
-  format: DownloadFormat,
-  quality: DownloadQuality,
+  format: string,
 ): Promise<{ filePath: string; title: string }> {
   ensureTempDir();
 
-  const args = buildYtdlArgs(url, format, quality);
+  const args = buildYtdlArgs(url, format);
 
-  logger.info({ url, format, quality }, "Starting download");
+  logger.info({ url, format }, "Starting download");
 
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
@@ -250,12 +226,4 @@ export function updateYtdlp(): { success: boolean; version: string } {
     logger.error({ err: message }, "Failed to update yt-dlp");
     return { success: false, version: getYtdlpVersion() };
   }
-}
-
-export async function writeCookieFile(name: string, content: string): Promise<string> {
-  ensureTempDir();
-  const filePath = path.join(env.TEMP_DOWNLOAD_DIR, `cookies_${name}.txt`);
-  await writeFile(filePath, content, "utf-8");
-  logger.info({ name, filePath }, "Cookie file written");
-  return filePath;
 }

@@ -3,6 +3,7 @@ import { getRedis } from "../config/redis";
 import { logger } from "../config/logger";
 import { env } from "../config/env";
 import { sql } from "../config/db";
+import { videoInfoQueue, downloadQueue, cleanupQueue } from "../queue/producer";
 
 async function checkDb(): Promise<boolean> {
   try {
@@ -24,16 +25,16 @@ async function checkRedis(): Promise<boolean> {
 }
 
 async function getQueueStatus() {
-  const { queues } = await import("../queue/producer");
+  const queues: Record<string, unknown> = { videoInfo: videoInfoQueue, download: downloadQueue, cleanup: cleanupQueue };
   const statuses: Record<string, unknown> = {};
   for (const [name, queue] of Object.entries(queues)) {
     try {
       const [waiting, active, completed, failed, delayed] = await Promise.all([
-        queue.getWaitingCount(),
-        queue.getActiveCount(),
-        queue.getCompletedCount(),
-        queue.getFailedCount(),
-        queue.getDelayedCount(),
+        (queue as any).getWaitingCount(),
+        (queue as any).getActiveCount(),
+        (queue as any).getCompletedCount(),
+        (queue as any).getFailedCount(),
+        (queue as any).getDelayedCount(),
       ]);
       statuses[name] = { waiting, active, completed, failed, delayed };
     } catch (err) {
@@ -72,8 +73,7 @@ export const healthController = {
   },
 
   async version(_req: Request, res: Response, _next: NextFunction): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-        res.json({
+    res.json({
       success: true,
       data: {
         version: "1.0.0",

@@ -5,16 +5,35 @@ import { startYtdlpUpdater, stopYtdlpUpdater, seedYtdlpVersion } from "./updater
 import { env } from "./config/env";
 import { sql } from "./config/db";
 
+const DB_RETRY_MAX_ATTEMPTS = 5;
+const DB_RETRY_BASE_DELAY_MS = 2000;
+
+async function waitForDatabase(): Promise<void> {
+  for (let attempt = 1; attempt <= DB_RETRY_MAX_ATTEMPTS; attempt++) {
+    try {
+      await sql`SELECT 1`;
+      logger.info("Database connected");
+      return;
+    } catch (error) {
+      if (attempt < DB_RETRY_MAX_ATTEMPTS) {
+        const delay = DB_RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
+        logger.warn(
+          { attempt, maxAttempts: DB_RETRY_MAX_ATTEMPTS, delay, err: error },
+          "Database connection failed, retrying",
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else {
+        logger.fatal({ err: error }, "Database connection failed after max retries");
+        process.exit(1);
+      }
+    }
+  }
+}
+
 async function startup(): Promise<void> {
   logger.info({ workerId: env.WORKER_ID, concurrency: env.WORKER_CONCURRENCY }, "Worker starting");
 
-  try {
-    await sql`SELECT 1`;
-    logger.info("Database connected");
-  } catch (error) {
-    logger.fatal({ err: error }, "Database connection failed");
-    process.exit(1);
-  }
+  await waitForDatabase();
 
   try {
     const workers = getWorkers();

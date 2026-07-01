@@ -6,13 +6,21 @@ import { getRedis } from "../config/redis";
 import { db } from "../config/db";
 import { logger } from "../config/logger";
 import { downloads, jobs, settings } from "../../../backend/src/db/schema";
-import { getVideoInfo, downloadVideo, updateYtdlp } from "../services/youtube.service";
+import { downloadVideo, updateYtdlp } from "../services/youtube.service";
 import { convertFile } from "../services/convert.service";
 import { uploadFile } from "../services/upload.service";
 import { cleanupSingleFile } from "../services/cleanup.service";
+import { createMetadataService } from "../services/metadata.service";
 import { env } from "../config/env";
+import type { VideoInfo } from "@yds/shared/types";
 
-function createWorker(queueName: string, handler: (job: any) => Promise<void>): Worker {
+const metadataService = createMetadataService(
+  getRedis,
+  env.APIFY_TOKEN,
+  env.APIFY_ACTOR_ID || undefined,
+);
+
+function createWorker<T>(queueName: string, handler: (job: any) => Promise<T>): Worker {
   const worker = new Worker(queueName, handler, {
     connection: getRedis(),
     concurrency: env.WORKER_CONCURRENCY,
@@ -39,38 +47,52 @@ export const videoInfoWorker = createWorker(QUEUES.VIDEO_INFO, async (job) => {
   const { url } = job.data as { url: string };
   logger.info({ jobId: job.id, url }, "Processing video info request");
 
-  const info = await getVideoInfo(url);
-
-  await db.insert(downloads).values({
-    url,
-    title: info.title,
-    format: "mp4",
-    quality: "best",
-    status: JobStatus.COMPLETED,
-  });
+  const result = await metadataService.getVideoMetadata(url);
 
   job.updateProgress(100);
 
-  return info;
+  return result;
 });
 
 export const downloadWorker = createWorker(QUEUES.DOWNLOAD, async (job) => {
-  const { downloadId, url, format, quality } = job.data as {
+  const { downloadId, url, format } = job.data as {
     downloadId: string;
     url: string;
     format: string;
-    quality: string;
   };
 
-  logger.info({ jobId: job.id, downloadId, url, format, quality }, "Processing download");
+  logger.info({ jobId: job.id, downloadId, url, format }, "Processing download");
 
   await db.update(jobs).set({ status: JobStatus.PROCESSING, updatedAt: new Date() }).where(eq(jobs.id, downloadId));
   await db.update(downloads).set({ status: JobStatus.PROCESSING, progress: 10, updatedAt: new Date() }).where(eq(downloads.id, downloadId));
 
+  const videoId = metadataService.extractVideoId(url);
+  if (videoId) {
+    try {
+      const redis = getRedis();
+      const cached = await redis.get(`metadata:${videoId}`);
+      if (cached) {
+        const parsed = JSON.parse(cached) as { data: VideoInfo };
+        const duration = parsed.data.duration;
+        if (duration > env.MAX_DURATION_SECONDS) {
+          throw new Error(
+            `Video is too long (${Math.round(duration / 60)} min). Maximum allowed is ${Math.round(env.MAX_DURATION_SECONDS / 60)} min.`,
+          );
+        }
+        logger.info({ videoId, duration }, "Pre-download validation passed");
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("too long")) {
+        throw error;
+      }
+      logger.warn({ err: error, videoId }, "Pre-download cache check failed, proceeding anyway");
+    }
+  }
+
   const startTime = Date.now();
 
   try {
-    const { filePath, title } = await downloadVideo(url, format as any, quality as any);
+    const { filePath, title } = await downloadVideo(url, format);
 
     await db.update(downloads).set({ progress: 50, title, updatedAt: new Date() }).where(eq(downloads.id, downloadId));
 
@@ -129,37 +151,6 @@ export const downloadWorker = createWorker(QUEUES.DOWNLOAD, async (job) => {
   }
 });
 
-export const audioWorker = createWorker(QUEUES.AUDIO, async (job) => {
-  const { downloadId, url, format } = job.data as {
-    downloadId: string;
-    url: string;
-    format: string;
-  };
-
-  logger.info({ jobId: job.id, downloadId, url, format }, "Processing audio download");
-
-  const { filePath, title } = await downloadVideo(url, format as any, "best" as any);
-  const { outputPath } = await convertFile(filePath, format);
-  const { key, size } = await uploadFile(outputPath);
-
-  await db
-    .update(downloads)
-    .set({
-      status: JobStatus.COMPLETED,
-      progress: 100,
-      title,
-      r2Key: key,
-      fileSize: size,
-      updatedAt: new Date(),
-    })
-    .where(eq(downloads.id, downloadId));
-
-  await cleanupSingleFile(filePath);
-  if (outputPath !== filePath) {
-    await cleanupSingleFile(outputPath);
-  }
-});
-
 export const cleanupWorker = createWorker(QUEUES.CLEANUP, async (job) => {
   const { action } = job.data as { action?: string };
 
@@ -175,24 +166,8 @@ export const cleanupWorker = createWorker(QUEUES.CLEANUP, async (job) => {
   }
 });
 
-export const retryWorker = createWorker(QUEUES.RETRY, async (job) => {
-  const { downloadId } = job.data as { downloadId: string };
-
-  logger.info({ jobId: job.id, downloadId }, "Processing retry");
-
-  const [existingJob] = await db.select().from(jobs).where(eq(jobs.id, downloadId)).limit(1);
-  if (existingJob) {
-    const queueName = existingJob.queue || QUEUES.DOWNLOAD;
-    const { queues } = await import("../../../backend/src/queue/producer");
-    const queue = queues[queueName as keyof typeof queues];
-    if (queue) {
-      await queue.add(queueName, job.data, { attempts: 5 });
-    }
-  }
-});
-
 export function getWorkers(): Worker[] {
-  return [videoInfoWorker, downloadWorker, audioWorker, cleanupWorker, retryWorker];
+  return [videoInfoWorker, downloadWorker, cleanupWorker];
 }
 
 export async function closeWorkers(): Promise<void> {
