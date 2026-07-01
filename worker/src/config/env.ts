@@ -24,6 +24,9 @@ const envSchema = z.object({
   YT_COOKIES_FROM_BROWSER: z.string().optional().default(""),
 
   METADATA_CACHE_TTL_SECONDS: z.coerce.number().default(86400),
+
+  MAX_DURATION_SECONDS: z.coerce.number().default(14400),
+  MAX_FILE_SIZE_MB: z.coerce.number().default(2048),
 });
 
 function parseEnv() {

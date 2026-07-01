@@ -27,6 +27,9 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().default(100),
 
   WORKER_API_KEY: z.string().min(1),
+
+  MAX_DURATION_SECONDS: z.coerce.number().default(14400),
+  MAX_FILE_SIZE_MB: z.coerce.number().default(2048),
 });
 
 function parseEnv() {

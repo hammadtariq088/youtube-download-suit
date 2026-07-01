@@ -4,7 +4,13 @@ import { getRedis } from "../config/redis";
 import { logger } from "../config/logger";
 
 function createQueue(name: string): Queue {
-  const queue = new Queue(name, { connection: getRedis() });
+  const queue = new Queue(name, {
+    connection: getRedis(),
+    defaultJobOptions: {
+      removeOnComplete: { age: 3600, count: 100 },
+      removeOnFail: { age: 86400, count: 50 },
+    },
+  });
 
   queue.on("error", (err) => {
     logger.error({ err, queue: name }, "Queue error");

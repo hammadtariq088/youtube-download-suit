@@ -5,7 +5,24 @@ import { db } from "../config/db";
 import { downloads, jobs } from "../db/schema";
 import { AppError } from "../middleware/error-handler";
 import { JobStatus } from "@yds/shared/types";
-import type { DownloadFormat, VideoMetadataResult } from "@yds/shared/types";
+import type { DownloadFormat, VideoMetadataResult, VideoInfo } from "@yds/shared/types";
+import { getRedis } from "../config/redis";
+import { env } from "../config/env";
+
+function extractVideoIdFromUrl(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=)([\w-]{11})/,
+    /(?:youtu\.be\/)([\w-]{11})/,
+    /(?:youtube\.com\/embed\/)([\w-]{11})/,
+    /(?:youtube\.com\/shorts\/)([\w-]{11})/,
+    /(?:youtube\.com\/live\/)([\w-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
 
 async function waitForVideoInfo(url: string, timeoutMs = 120000): Promise<VideoMetadataResult> {
   const job = await videoInfoQueue.add(
@@ -55,6 +72,29 @@ export const videoController = {
         format: DownloadFormat;
       };
 
+      const videoId = extractVideoIdFromUrl(url);
+      if (videoId) {
+        try {
+          const redis = getRedis();
+          const cached = await redis.get(`metadata:${videoId}`);
+          if (cached) {
+            const parsed = JSON.parse(cached) as { data: VideoInfo };
+            const duration = parsed.data.duration;
+            if (duration > env.MAX_DURATION_SECONDS) {
+              return next(
+                new AppError(
+                  400,
+                  `Video is too long (${Math.round(duration / 60)} min). Maximum allowed is ${Math.round(env.MAX_DURATION_SECONDS / 60)} min.`,
+                  "VIDEO_TOO_LONG",
+                ),
+              );
+            }
+          }
+        } catch {
+          logger.warn({ videoId }, "Cache check failed, proceeding without duration validation");
+        }
+      }
+
       const [download] = await db
         .insert(downloads)
         .values({
@@ -82,8 +122,8 @@ export const videoController = {
         {
           attempts: 5,
           backoff: { type: "exponential", delay: 60_000 },
-          removeOnComplete: false,
-          removeOnFail: false,
+          removeOnComplete: { age: 3600, count: 100 },
+          removeOnFail: { age: 86400, count: 50 },
         },
       );
 

@@ -12,6 +12,7 @@ import { uploadFile } from "../services/upload.service";
 import { cleanupSingleFile } from "../services/cleanup.service";
 import { createMetadataService } from "../services/metadata.service";
 import { env } from "../config/env";
+import type { VideoInfo } from "@yds/shared/types";
 
 const metadataService = createMetadataService(
   getRedis,
@@ -64,6 +65,29 @@ export const downloadWorker = createWorker(QUEUES.DOWNLOAD, async (job) => {
 
   await db.update(jobs).set({ status: JobStatus.PROCESSING, updatedAt: new Date() }).where(eq(jobs.id, downloadId));
   await db.update(downloads).set({ status: JobStatus.PROCESSING, progress: 10, updatedAt: new Date() }).where(eq(downloads.id, downloadId));
+
+  const videoId = metadataService.extractVideoId(url);
+  if (videoId) {
+    try {
+      const redis = getRedis();
+      const cached = await redis.get(`metadata:${videoId}`);
+      if (cached) {
+        const parsed = JSON.parse(cached) as { data: VideoInfo };
+        const duration = parsed.data.duration;
+        if (duration > env.MAX_DURATION_SECONDS) {
+          throw new Error(
+            `Video is too long (${Math.round(duration / 60)} min). Maximum allowed is ${Math.round(env.MAX_DURATION_SECONDS / 60)} min.`,
+          );
+        }
+        logger.info({ videoId, duration }, "Pre-download validation passed");
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("too long")) {
+        throw error;
+      }
+      logger.warn({ err: error, videoId }, "Pre-download cache check failed, proceeding anyway");
+    }
+  }
 
   const startTime = Date.now();
 

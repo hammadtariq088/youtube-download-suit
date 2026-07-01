@@ -112,6 +112,7 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
 }
 
 function buildYtdlArgs(url: string, format: string): string[] {
+  const maxSizeBytes = env.MAX_FILE_SIZE_MB * 1024 * 1024;
   const args = [
     "--no-warnings",
     "--no-playlist",
@@ -128,6 +129,8 @@ function buildYtdlArgs(url: string, format: string): string[] {
     "10",
     "--throttled-rate",
     "100",
+    "--max-filesize",
+    String(maxSizeBytes),
   ];
 
   addCookieArgs(args);
