@@ -8,8 +8,6 @@ import { errorHandler } from "./middleware/error-handler";
 import { healthRouter } from "./routes/health.routes";
 import { videoRouter } from "./routes/video.routes";
 import { downloadRouter } from "./routes/download.routes";
-import { authRouter } from "./routes/auth.routes";
-import { adminRouter } from "./routes/admin.routes";
 import { generalRateLimiter } from "./middleware/rate-limiter";
 
 const app = express();
@@ -23,8 +21,6 @@ app.use(generalRateLimiter);
 app.use("/api/health", healthRouter);
 app.use("/api/video", videoRouter);
 app.use("/api/download", downloadRouter);
-app.use("/api/auth", authRouter);
-app.use("/api/admin", adminRouter);
 
 app.use(errorHandler);
 

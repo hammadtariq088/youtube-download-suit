@@ -12,6 +12,7 @@ build/
 backend/.env
 worker/.env
 docs/
+cookies.txt
 
 # IDE
 .vscode/

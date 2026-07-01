@@ -1,4 +1,4 @@
-import type { VideoInfo, VideoFormat, QualityOption } from "@yds/shared/types";
+import type { VideoInfo } from "@yds/shared/types";
 import { logger } from "../config/logger";
 import { withRetry } from "../utils/retry";
 
@@ -135,26 +135,6 @@ export class ApifyService {
     const duration = item.duration ?? 0;
     const videoId = this.extractVideoId(sourceUrl) || item.channelId || "";
 
-    const formats: VideoFormat[] = [
-      {
-        formatId: "best",
-        extension: "mp4",
-        resolution: item.width && item.height ? `${item.width}x${item.height}` : null,
-        filesize: null,
-        filesizeApprox: null,
-        bitrate: null,
-        fps: null,
-        codec: null,
-        hasAudio: true,
-        hasVideo: true,
-        isAudioOnly: false,
-      },
-    ];
-
-    const qualities: QualityOption[] = [
-      { label: "Best Available", value: "best", formats: ["mp4"] },
-    ];
-
     return {
       id: videoId,
       title: item.title ?? "Unknown Title",
@@ -165,8 +145,6 @@ export class ApifyService {
       uploaderUrl: item.channelUrl ?? "",
       views: item.viewCount ?? 0,
       uploadDate: item.uploadDate ?? "",
-      formats,
-      qualities,
     };
   }
 

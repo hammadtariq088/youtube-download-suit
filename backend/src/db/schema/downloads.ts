@@ -7,7 +7,6 @@ export const downloads = pgTable(
     url: text("url").notNull(),
     title: varchar("title", { length: 500 }),
     format: varchar("format", { length: 10 }).notNull(),
-    quality: varchar("quality", { length: 10 }).notNull(),
     status: varchar("status", { length: 20 }).notNull().default("pending"),
     progress: integer("progress").notNull().default(0),
     fileSize: doublePrecision("file_size"),

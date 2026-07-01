@@ -5,7 +5,7 @@ import { db } from "../config/db";
 import { downloads, jobs } from "../db/schema";
 import { AppError } from "../middleware/error-handler";
 import { JobStatus } from "@yds/shared/types";
-import type { DownloadFormat, DownloadQuality, VideoMetadataResult } from "@yds/shared/types";
+import type { DownloadFormat, VideoMetadataResult } from "@yds/shared/types";
 
 async function waitForVideoInfo(url: string, timeoutMs = 120000): Promise<VideoMetadataResult> {
   const job = await videoInfoQueue.add(
@@ -50,10 +50,9 @@ export const videoController = {
 
   async convert(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { url, format, quality } = req.body as {
+      const { url, format } = req.body as {
         url: string;
         format: DownloadFormat;
-        quality: DownloadQuality;
       };
 
       const [download] = await db
@@ -61,7 +60,6 @@ export const videoController = {
         .values({
           url,
           format,
-          quality,
           status: JobStatus.PENDING,
           ipAddress: req.ip,
           userAgent: req.headers["user-agent"],
@@ -80,7 +78,6 @@ export const videoController = {
           downloadId: download.id,
           url,
           format,
-          quality,
         },
         {
           attempts: 5,
@@ -90,7 +87,7 @@ export const videoController = {
         },
       );
 
-      logger.info({ downloadId: download.id, format, quality }, "Download job created");
+      logger.info({ downloadId: download.id, format }, "Download job created");
 
       res.status(201).json({
         success: true,

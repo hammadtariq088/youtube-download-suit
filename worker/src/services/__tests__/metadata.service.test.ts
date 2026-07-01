@@ -36,8 +36,6 @@ function createMockVideoInfo(overrides: Partial<VideoInfo> = {}): VideoInfo {
     uploaderUrl: "https://youtube.com/@testchannel",
     views: 1000,
     uploadDate: "20240101",
-    formats: [],
-    qualities: [{ label: "Best Available", value: "best", formats: ["mp4"] }],
     ...overrides,
   };
 }

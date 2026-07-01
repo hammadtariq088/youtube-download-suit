@@ -20,6 +20,9 @@ const envSchema = z.object({
   APIFY_TOKEN: z.string().optional().default(""),
   APIFY_ACTOR_ID: z.string().optional().default(""),
 
+  YT_COOKIES_FILE: z.string().optional().default(""),
+  YT_COOKIES_FROM_BROWSER: z.string().optional().default(""),
+
   METADATA_CACHE_TTL_SECONDS: z.coerce.number().default(86400),
 });
 

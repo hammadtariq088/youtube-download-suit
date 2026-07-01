@@ -9,14 +9,6 @@ export const generalRateLimiter = rateLimit({
   message: { success: false, error: "Too many requests, please try again later.", code: "RATE_LIMITED" },
 });
 
-export const authRateLimiter = rateLimit({
-  windowMs: RATE_LIMITS.AUTH.windowMs,
-  max: RATE_LIMITS.AUTH.max,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, error: "Too many login attempts, please try again later.", code: "RATE_LIMITED" },
-});
-
 export const downloadRateLimiter = rateLimit({
   windowMs: RATE_LIMITS.DOWNLOAD.windowMs,
   max: RATE_LIMITS.DOWNLOAD.max,

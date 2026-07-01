@@ -26,7 +26,6 @@ export const downloadController = {
           url: download.url,
           title: download.title,
           format: download.format,
-          quality: download.quality,
           status: download.status,
           progress: download.progress,
           fileSize: download.fileSize,

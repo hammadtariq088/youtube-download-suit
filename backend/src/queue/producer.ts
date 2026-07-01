@@ -25,26 +25,16 @@ function createQueueEvents(name: string): QueueEvents {
 
 export const videoInfoQueue = createQueue(QUEUES.VIDEO_INFO);
 export const downloadQueue = createQueue(QUEUES.DOWNLOAD);
-export const audioQueue = createQueue(QUEUES.AUDIO);
-export const videoQueue = createQueue(QUEUES.VIDEO);
 export const cleanupQueue = createQueue(QUEUES.CLEANUP);
-export const retryQueue = createQueue(QUEUES.RETRY);
 
 export const videoInfoQueueEvents = createQueueEvents(QUEUES.VIDEO_INFO);
 export const downloadQueueEvents = createQueueEvents(QUEUES.DOWNLOAD);
 
-export const queues = {
-  [QUEUES.VIDEO_INFO]: videoInfoQueue,
-  [QUEUES.DOWNLOAD]: downloadQueue,
-  [QUEUES.AUDIO]: audioQueue,
-  [QUEUES.VIDEO]: videoQueue,
-  [QUEUES.CLEANUP]: cleanupQueue,
-  [QUEUES.RETRY]: retryQueue,
-} as const;
-
 export async function closeQueues(): Promise<void> {
   await Promise.all([
-    ...Object.values(queues).map((q) => q.close()),
+    videoInfoQueue.close(),
+    downloadQueue.close(),
+    cleanupQueue.close(),
     videoInfoQueueEvents.close(),
     downloadQueueEvents.close(),
   ]);

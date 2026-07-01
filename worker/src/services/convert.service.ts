@@ -1,5 +1,4 @@
 import { spawn } from "node:child_process";
-import { unlink } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { logger } from "../config/logger";
 
@@ -10,24 +9,10 @@ export interface ConversionResult {
 function getFfmpegArgs(inputPath: string, outputFormat: string, outputPath: string): string[] {
   const args = ["-i", inputPath, "-y"];
 
-  switch (outputFormat) {
-    case "mp3":
-      args.push("-vn", "-acodec", "libmp3lame", "-q:a", "2");
-      break;
-    case "m4a":
-      args.push("-vn", "-acodec", "aac", "-b:a", "192k");
-      break;
-    case "mp4":
-      args.push("-c:v", "libx264", "-preset", "fast", "-crf", "22", "-c:a", "aac", "-b:a", "128k");
-      break;
-    case "webm":
-      args.push("-c:v", "libvpx", "-crf", "10", "-b:v", "1M", "-c:a", "libvorbis");
-      break;
-    case "mkv":
-      args.push("-c:v", "libx264", "-preset", "fast", "-crf", "22", "-c:a", "aac");
-      break;
-    default:
-      args.push("-c", "copy");
+  if (outputFormat === "mp3") {
+    args.push("-vn", "-acodec", "libmp3lame", "-q:a", "2");
+  } else {
+    args.push("-c:v", "libx264", "-preset", "fast", "-crf", "22", "-c:a", "aac", "-b:a", "128k");
   }
 
   args.push(outputPath);
@@ -65,10 +50,6 @@ export async function convertFile(
     proc.stderr.on("data", (data: Buffer) => {
       const text = data.toString();
       stderr += text;
-      const pct = extractFfmpegProgress(text);
-      if (pct !== null) {
-        logger.info({ progress: pct }, "Conversion progress");
-      }
     });
 
     proc.on("close", (code) => {
@@ -87,26 +68,4 @@ export async function convertFile(
       reject(new Error(`Failed to start FFmpeg: ${err.message}`));
     });
   });
-}
-
-function extractFfmpegProgress(data: string): number | null {
-  const match = data.match(/time=(\d+):(\d+):(\d+)\.(\d+)/);
-  if (match) {
-    const hours = parseInt(match[1]);
-    const minutes = parseInt(match[2]);
-    const seconds = parseInt(match[3]);
-    return hours * 3600 + minutes * 60 + seconds;
-  }
-  return null;
-}
-
-export async function cleanupTempFile(filePath: string): Promise<void> {
-  try {
-    if (existsSync(filePath)) {
-      await unlink(filePath);
-      logger.info({ filePath }, "Temporary file deleted");
-    }
-  } catch (error) {
-    logger.warn({ err: error, filePath }, "Failed to delete temporary file");
-  }
 }
