@@ -54,14 +54,14 @@ export const videoController = {
       logger.error({ err: msg }, "Failed to fetch video info");
 
       if (msg.includes("timed out") || msg.includes("timeout")) {
-        return next(new AppError(504, "Video info fetch timed out. Worker may be busy.", "WORKER_TIMEOUT"));
+        return next(new AppError(504, "Request timed out. The server is busy, please try again.", "WORKER_TIMEOUT"));
       }
 
       if (msg.includes("Unable to fetch metadata") || msg.includes("BOTH_PROVIDERS_FAILED")) {
-        return next(new AppError(500, "Unable to fetch metadata.", "FETCH_FAILED"));
+        return next(new AppError(500, "Could not retrieve video information. Make sure the URL is correct.", "FETCH_FAILED"));
       }
 
-      next(new AppError(502, "Failed to fetch video information. Worker may be offline.", "WORKER_OFFLINE"));
+      next(new AppError(502, "Service is temporarily unavailable. Please try again later.", "WORKER_OFFLINE"));
     }
   },
 
@@ -84,7 +84,7 @@ export const videoController = {
               return next(
                 new AppError(
                   400,
-                  `Video is too long (${Math.round(duration / 60)} min). Maximum allowed is ${Math.round(env.MAX_DURATION_SECONDS / 60)} min.`,
+                  `This video is ${Math.round(duration / 60)} minutes long. Maximum allowed duration is ${Math.round(env.MAX_DURATION_SECONDS / 60)} minutes.`,
                   "VIDEO_TOO_LONG",
                 ),
               );

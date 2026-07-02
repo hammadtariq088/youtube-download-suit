@@ -16,7 +16,7 @@ export const downloadController = {
       const [download] = await db.select().from(downloads).where(eq(downloads.id, id)).limit(1);
 
       if (!download) {
-        return next(new AppError(404, "Download not found", "JOB_NOT_FOUND"));
+        return next(new AppError(404, "Download not found. Check the download ID and try again.", "JOB_NOT_FOUND"));
       }
 
       res.json({
@@ -24,8 +24,16 @@ export const downloadController = {
         data: {
           id: download.id,
           url: download.url,
+          youtubeVideoId: download.youtubeVideoId,
           title: download.title,
+          description: download.description,
+          channelName: download.channelName,
+          thumbnail: download.thumbnail,
           format: download.format,
+          fileName: download.fileName,
+          fileExtension: download.fileExtension,
+          mimeType: download.mimeType,
+          provider: download.provider,
           status: download.status,
           progress: download.progress,
           fileSize: download.fileSize,
@@ -46,29 +54,35 @@ export const downloadController = {
       const [download] = await db.select().from(downloads).where(eq(downloads.id, id)).limit(1);
 
       if (!download) {
-        return next(new AppError(404, "Download not found", "JOB_NOT_FOUND"));
+        return next(new AppError(404, "Download not found. Check the download ID and try again.", "JOB_NOT_FOUND"));
       }
 
       if (download.status !== JobStatus.COMPLETED || !download.r2Key) {
-        return next(new AppError(400, "Download not ready", "DOWNLOAD_NOT_COMPLETED"));
+        return next(new AppError(400, "Download is still processing. Please wait and try again.", "DOWNLOAD_NOT_COMPLETED"));
       }
+
+      const fileName = download.fileName || `${download.title || "video"}.${download.format}`;
 
       const command = new GetObjectCommand({
         Bucket: R2_CONFIG.bucketName,
         Key: download.r2Key,
-        ResponseContentDisposition: `attachment; filename="${download.title || "video"}.${download.format}"`,
+        ResponseContentDisposition: `attachment; filename="${fileName}"`,
       });
 
       const signedUrl = await getSignedUrl(r2Client, command, { expiresIn: R2_CONFIG.signedUrlExpiry });
 
-      logger.info({ downloadId: id }, "Signed URL generated");
+      logger.info({ downloadId: id, fileName }, "Signed URL generated");
 
       res.json({
         success: true,
         data: {
-          url: signedUrl,
-          expiresIn: R2_CONFIG.signedUrlExpiry,
-          filename: `${download.title || "video"}.${download.format}`,
+          fileName,
+          format: download.format,
+          downloadUrl: signedUrl,
+          storage: "cloudflare-r2",
+          downloadId: download.id,
+          size: download.fileSize,
+          provider: download.provider || "yt-dlp",
         },
       });
     } catch (error) {

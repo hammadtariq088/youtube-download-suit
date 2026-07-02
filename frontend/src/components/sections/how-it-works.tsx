@@ -4,20 +4,20 @@ import { Link, Music, Download } from "lucide-react";
 const steps = [
   {
     number: "01",
-    title: "Paste YouTube URL",
-    description: "Copy the link of any YouTube video and paste it into the input field above.",
+    title: "Paste a YouTube URL",
+    description: "Copy any video, Shorts, or live stream link and paste it into the input field above.",
     icon: Link,
   },
   {
     number: "02",
-    title: "Choose MP3 or MP4",
-    description: "Select your preferred format — MP4 for video or MP3 for audio-only extraction.",
+    title: "Review Video Details",
+    description: "We fetch the title, duration, uploader, and thumbnail so you can confirm it's the right video.",
     icon: Music,
   },
   {
     number: "03",
-    title: "Download Instantly",
-    description: "Your file is processed in seconds. Download with one click — it's that simple.",
+    title: "Choose Format & Download",
+    description: "Pick MP4 for video or MP3 for audio. Your file is processed in seconds and ready to save with one click.",
     icon: Download,
   },
 ];

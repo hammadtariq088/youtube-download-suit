@@ -11,11 +11,11 @@ interface HeroProps {
 
 export function Hero({ url, urlError, isPending, onUrlChange, onSubmit }: HeroProps) {
   return (
-    <section id="hero" className="relative overflow-hidden px-4 pb-16 pt-28 sm:pt-36">
+    <section id="hero" className="relative overflow-hidden px-4 pt-28 pb-16 sm:pt-36">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-accent/5 blur-3xl" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-primary/[0.03] blur-3xl" />
+        <div className="bg-primary/5 absolute -top-40 -right-40 h-80 w-80 rounded-full blur-3xl" />
+        <div className="bg-accent/5 absolute -bottom-40 -left-40 h-80 w-80 rounded-full blur-3xl" />
+        <div className="bg-primary/[0.03] absolute top-1/3 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full blur-3xl" />
       </div>
 
       <div className="mx-auto max-w-3xl text-center">
@@ -24,21 +24,22 @@ export function Hero({ url, urlError, isPending, onUrlChange, onSubmit }: HeroPr
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
-            <span className="flex h-2 w-2 rounded-full bg-success" />
+          <div className="border-border bg-secondary text-muted-foreground mb-6 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium">
+            <span className="bg-success flex h-2 w-2 rounded-full" />
             Free &amp; Secure — No sign-up required
           </div>
 
-          <h1 className="mb-4 text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
+          <h1 className="text-foreground mb-4 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
             Download YouTube
             <br />
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <span className="from-primary to-accent bg-gradient-to-r bg-clip-text text-transparent">
               Videos &amp; Audio
             </span>
           </h1>
 
-          <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Paste any YouTube link and download high-quality MP4 videos or MP3 audio in seconds. Fast, free, and no account needed.
+          <p className="text-muted-foreground mx-auto mb-8 max-w-xl text-base leading-relaxed sm:text-lg">
+            Paste YouTube link and download high-quality MP4 videos or MP3 audio in seconds. Fast,
+            free, and no sign up needed.
           </p>
         </motion.div>
 
@@ -48,9 +49,9 @@ export function Hero({ url, urlError, isPending, onUrlChange, onSubmit }: HeroPr
           transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
         >
           <form onSubmit={onSubmit} className="mx-auto mb-4 max-w-xl">
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-card p-1.5 shadow-sm transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+            <div className="border-border bg-card focus-within:border-primary focus-within:ring-primary/20 flex items-center gap-2 rounded-xl border p-1.5 shadow-sm transition-all focus-within:ring-2">
               <div className="flex flex-1 items-center gap-2 pl-3">
-                <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
+                <Search className="text-muted-foreground h-5 w-5 shrink-0" />
                 <input
                   type="url"
                   placeholder="Paste YouTube URL here..."
@@ -58,14 +59,14 @@ export function Hero({ url, urlError, isPending, onUrlChange, onSubmit }: HeroPr
                   onChange={(e) => {
                     onUrlChange(e.target.value);
                   }}
-                  className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  className="placeholder:text-muted-foreground h-11 w-full bg-transparent text-sm outline-none"
                   disabled={isPending}
                 />
               </div>
               <button
                 type="submit"
                 disabled={isPending}
-                className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-[#1D4ED8] disabled:opacity-50 active:scale-95"
+                className="bg-primary text-primary-foreground inline-flex h-11 items-center gap-2 rounded-lg px-5 text-sm font-medium shadow-sm transition-all hover:bg-[#1D4ED8] active:scale-95 disabled:opacity-50"
               >
                 {isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -79,7 +80,7 @@ export function Hero({ url, urlError, isPending, onUrlChange, onSubmit }: HeroPr
               <motion.p
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-2 text-left text-sm text-destructive"
+                className="text-destructive mt-2 text-left text-sm"
               >
                 {urlError}
               </motion.p>

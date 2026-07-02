@@ -48,7 +48,12 @@ export function HomePage() {
   const downloadUrlMutation = useMutation({
     mutationFn: (id: string) => api.download.url(id),
     onSuccess: (data) => {
-      window.open(data.url, "_blank");
+      const a = document.createElement("a");
+      a.href = data.downloadUrl;
+      a.download = data.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     },
   });
 

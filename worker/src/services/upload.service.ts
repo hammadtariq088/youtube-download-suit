@@ -2,18 +2,26 @@ import { readFile } from "node:fs/promises";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { r2Client, R2_CONFIG } from "../config/r2";
 import { logger } from "../config/logger";
-import path from "node:path";
+import { sanitizeFilename } from "../utils/filename";
 
 const UPLOAD_TIMEOUT_MS = 300_000;
 
 export interface UploadResult {
   key: string;
   size: number;
+  fileName: string;
 }
 
-export async function uploadFile(localPath: string): Promise<UploadResult> {
-  const fileName = path.basename(localPath);
-  const key = `downloads/${Date.now()}-${fileName}`;
+export async function uploadFile(
+  localPath: string,
+  videoId: string,
+  title: string,
+  format: string,
+): Promise<UploadResult> {
+  const ext = format === "mp3" ? "mp3" : "mp4";
+  const sanitized = sanitizeFilename(title);
+  const fileName = `${sanitized}.${ext}`;
+  const key = `downloads/${ext}/${videoId}-${sanitized}.${ext}`;
 
   logger.info({ localPath, key }, "Starting upload to R2");
 
@@ -27,11 +35,13 @@ export async function uploadFile(localPath: string): Promise<UploadResult> {
     const fileContent = await readFile(localPath);
     const size = fileContent.length;
 
+    const contentType = ext === "mp4" ? "video/mp4" : "audio/mpeg";
+
     const command = new PutObjectCommand({
       Bucket: R2_CONFIG.bucketName,
       Key: key,
       Body: fileContent,
-      ContentType: getContentType(path.extname(fileName)),
+      ContentType: contentType,
     });
 
     await r2Client.send(command, { abortSignal: controller.signal });
@@ -40,21 +50,10 @@ export async function uploadFile(localPath: string): Promise<UploadResult> {
 
     logger.info({ key, size, bucket: R2_CONFIG.bucketName }, "Upload to R2 completed");
 
-    return { key, size };
+    return { key, size, fileName };
   } catch (error) {
     clearTimeout(timeoutId);
     logger.error({ err: error, key }, "Upload to R2 failed");
     throw error;
   }
-}
-
-function getContentType(extension: string): string {
-  const map: Record<string, string> = {
-    ".mp4": "video/mp4",
-    ".mp3": "audio/mpeg",
-    ".m4a": "audio/mp4",
-    ".webm": "video/webm",
-    ".mkv": "video/x-matroska",
-  };
-  return map[extension] || "application/octet-stream";
 }

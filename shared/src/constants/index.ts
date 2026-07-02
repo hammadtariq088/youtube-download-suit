@@ -39,8 +39,8 @@ export const TEMP_DIR = "/tmp/yds-downloads";
 export const API_PREFIX = "/api";
 
 export const RATE_LIMITS = {
-  GENERAL: { windowMs: 15 * 60 * 1000, max: 100 },
-  DOWNLOAD: { windowMs: 60 * 60 * 1000, max: 50 },
+  GENERAL: { windowMs: 15 * 60 * 1000, max: 300 },
+  DOWNLOAD: { windowMs: 60 * 60 * 1000, max: 100 },
 } as const;
 
 export const SUPPORTED_URL_PATTERNS = [

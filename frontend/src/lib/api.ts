@@ -53,8 +53,16 @@ export const api = {
       request<{
         id: string;
         url: string;
+        youtubeVideoId: string | null;
         title: string | null;
+        description: string | null;
+        channelName: string | null;
+        thumbnail: string | null;
         format: string;
+        fileName: string | null;
+        fileExtension: string | null;
+        mimeType: string | null;
+        provider: string | null;
         status: string;
         progress: number;
         fileSize: number | null;
@@ -63,6 +71,14 @@ export const api = {
         updatedAt: string;
       }>(`/download/${id}`),
     url: (id: string) =>
-      request<{ url: string; expiresIn: number; filename: string }>(`/download/${id}/url`),
+      request<{
+        downloadUrl: string;
+        fileName: string;
+        format: string;
+        storage: string;
+        downloadId: string;
+        size: number | null;
+        provider: string;
+      }>(`/download/${id}/url`),
   },
 };

@@ -45,8 +45,25 @@ export interface DownloadJob {
   errorMessage: string | null;
   fileSize: number | null;
   r2Key: string | null;
+  fileName: string | null;
+  fileExtension: string | null;
+  mimeType: string | null;
+  provider: MetadataProvider | null;
+  youtubeVideoId: string | null;
+  r2Url: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface DownloadResponse {
+  success: boolean;
+  fileName: string;
+  format: string;
+  downloadUrl: string;
+  storage: string;
+  downloadId: string;
+  size: number | null;
+  provider: string | null;
 }
 
 export interface ApiResponse<T = unknown> {

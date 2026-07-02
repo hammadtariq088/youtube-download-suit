@@ -6,13 +6,14 @@ import { getRedis } from "../config/redis";
 import { db } from "../config/db";
 import { logger } from "../config/logger";
 import { downloads, jobs, settings } from "../../../backend/src/db/schema";
-import { downloadVideo, updateYtdlp } from "../services/youtube.service";
+import { downloadVideo, getVideoTitle, updateYtdlp } from "../services/youtube.service";
 import { convertFile } from "../services/convert.service";
 import { uploadFile } from "../services/upload.service";
 import { cleanupSingleFile } from "../services/cleanup.service";
 import { createMetadataService } from "../services/metadata.service";
 import { env } from "../config/env";
 import type { VideoInfo } from "@yds/shared/types";
+import { sanitizeFilename } from "../utils/filename";
 
 const metadataService = createMetadataService(
   getRedis,
@@ -54,6 +55,34 @@ export const videoInfoWorker = createWorker(QUEUES.VIDEO_INFO, async (job) => {
   return result;
 });
 
+async function getVideoMetadataFromCache(videoId: string): Promise<{
+  title: string;
+  description: string;
+  duration: number;
+  uploader: string;
+  thumbnail: string;
+  provider: string;
+} | null> {
+  try {
+    const redis = getRedis();
+    const cached = await redis.get(`metadata:${videoId}`);
+    if (cached) {
+      const parsed = JSON.parse(cached) as { data: VideoInfo; provider?: string };
+      return {
+        title: parsed.data.title,
+        description: parsed.data.description,
+        duration: parsed.data.duration,
+        uploader: parsed.data.uploader,
+        thumbnail: parsed.data.thumbnail,
+        provider: parsed.provider || "yt-dlp",
+      };
+    }
+  } catch (error) {
+    logger.warn({ err: error, videoId }, "Cache read failed");
+  }
+  return null;
+}
+
 export const downloadWorker = createWorker(QUEUES.DOWNLOAD, async (job) => {
   const { downloadId, url, format } = job.data as {
     downloadId: string;
@@ -66,41 +95,91 @@ export const downloadWorker = createWorker(QUEUES.DOWNLOAD, async (job) => {
   await db.update(jobs).set({ status: JobStatus.PROCESSING, updatedAt: new Date() }).where(eq(jobs.id, downloadId));
   await db.update(downloads).set({ status: JobStatus.PROCESSING, progress: 10, updatedAt: new Date() }).where(eq(downloads.id, downloadId));
 
-  const videoId = metadataService.extractVideoId(url);
+  const videoId = metadataService.extractVideoId(url) || "";
+
+  let originalTitle = "";
+  let description = "";
+  let channelName = "";
+  let thumbnail = "";
+  let cachedDuration: number | null = null;
+  let provider: string | null = null;
+
   if (videoId) {
-    try {
-      const redis = getRedis();
-      const cached = await redis.get(`metadata:${videoId}`);
-      if (cached) {
-        const parsed = JSON.parse(cached) as { data: VideoInfo };
-        const duration = parsed.data.duration;
-        if (duration > env.MAX_DURATION_SECONDS) {
-          throw new Error(
-            `Video is too long (${Math.round(duration / 60)} min). Maximum allowed is ${Math.round(env.MAX_DURATION_SECONDS / 60)} min.`,
-          );
-        }
-        logger.info({ videoId, duration }, "Pre-download validation passed");
+    const cached = await getVideoMetadataFromCache(videoId);
+    if (cached) {
+      originalTitle = cached.title;
+      description = cached.description;
+      channelName = cached.uploader;
+      thumbnail = cached.thumbnail;
+      cachedDuration = cached.duration;
+      provider = cached.provider;
+
+      if (cached.duration > env.MAX_DURATION_SECONDS) {
+        const errorMsg = `This video is ${Math.round(cached.duration / 60)} minutes long. Maximum allowed duration is ${Math.round(env.MAX_DURATION_SECONDS / 60)} minutes.`;
+        await db
+          .update(downloads)
+          .set({
+            status: JobStatus.FAILED,
+            errorMessage: errorMsg,
+            updatedAt: new Date(),
+          })
+          .where(eq(downloads.id, downloadId));
+        await db
+          .update(jobs)
+          .set({ status: JobStatus.FAILED, lastError: errorMsg, updatedAt: new Date() })
+          .where(eq(jobs.id, downloadId));
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("too long")) {
-        throw error;
+
+      logger.info({ videoId, duration: cached.duration }, "Pre-download validation passed");
+    } else {
+      try {
+        originalTitle = await getVideoTitle(url);
+        logger.info({ videoId, title: originalTitle }, "Fetched video title as fallback");
+      } catch {
+        logger.warn({ videoId }, "Could not fetch video title, will use filename");
       }
-      logger.warn({ err: error, videoId }, "Pre-download cache check failed, proceeding anyway");
     }
   }
 
   const startTime = Date.now();
 
   try {
-    const { filePath, title } = await downloadVideo(url, format);
+    const { filePath } = await downloadVideo(url, format);
 
-    await db.update(downloads).set({ progress: 50, title, updatedAt: new Date() }).where(eq(downloads.id, downloadId));
+    const effectiveTitle = originalTitle || videoId || "video";
+    const ext = format === "mp3" ? "mp3" : "mp4";
+    const fileName = `${sanitizeFilename(effectiveTitle)}.${ext}`;
+    const mimeType = ext === "mp4" ? "video/mp4" : "audio/mpeg";
+
+    await db
+      .update(downloads)
+      .set({
+        progress: 50,
+        title: effectiveTitle,
+        fileName,
+        fileExtension: ext,
+        mimeType,
+        youtubeVideoId: videoId || null,
+        description: description || null,
+        channelName: channelName || null,
+        thumbnail: thumbnail || null,
+        duration: cachedDuration,
+        provider: provider,
+        updatedAt: new Date(),
+      })
+      .where(eq(downloads.id, downloadId));
 
     const { outputPath } = await convertFile(filePath, format);
 
     await db.update(downloads).set({ progress: 80, updatedAt: new Date() }).where(eq(downloads.id, downloadId));
 
-    const { key, size } = await uploadFile(outputPath);
+    const { key, size, fileName: uploadedFileName } = await uploadFile(
+      outputPath,
+      videoId || "unknown",
+      effectiveTitle,
+      format,
+    );
 
     const processingTime = Date.now() - startTime;
 
@@ -111,6 +190,7 @@ export const downloadWorker = createWorker(QUEUES.DOWNLOAD, async (job) => {
         progress: 100,
         r2Key: key,
         fileSize: size,
+        fileName: uploadedFileName,
         processingTimeMs: processingTime,
         updatedAt: new Date(),
       })
@@ -126,7 +206,7 @@ export const downloadWorker = createWorker(QUEUES.DOWNLOAD, async (job) => {
       await cleanupSingleFile(outputPath);
     }
 
-    logger.info({ downloadId, key, size, processingTime }, "Download job completed successfully");
+    logger.info({ downloadId, key, size, fileName: uploadedFileName, processingTime }, "Download job completed successfully");
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const processingTime = Date.now() - startTime;

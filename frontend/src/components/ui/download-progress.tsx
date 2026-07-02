@@ -27,7 +27,7 @@ export function DownloadProgress({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
-      className="rounded-xl border border-border bg-card p-8 text-center shadow-sm"
+      className="border-border bg-card rounded-xl border p-8 text-center shadow-sm"
     >
       {isFailed ? (
         <motion.div
@@ -35,16 +35,16 @@ export function DownloadProgress({
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center"
         >
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
-            <XCircle className="h-7 w-7 text-destructive" />
+          <div className="bg-destructive/10 mb-4 flex h-14 w-14 items-center justify-center rounded-full">
+            <XCircle className="text-destructive h-7 w-7" />
           </div>
-          <h3 className="mb-1 text-lg font-semibold text-foreground">Download Failed</h3>
-          <p className="mb-6 max-w-xs text-sm text-muted-foreground">
+          <h3 className="text-foreground mb-1 text-lg font-semibold">Download Failed</h3>
+          <p className="text-muted-foreground mb-6 max-w-xs text-sm">
             {errorMessage || "An unexpected error occurred. Please try again."}
           </p>
           <button
             onClick={onReset}
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-5 text-sm font-medium text-foreground shadow-sm transition-all hover:bg-secondary active:scale-[0.98]"
+            className="border-border bg-card text-foreground hover:bg-secondary inline-flex h-10 items-center gap-2 rounded-lg border px-5 text-sm font-medium shadow-sm transition-all active:scale-[0.98]"
           >
             <RotateCcw className="h-4 w-4" />
             Try Again
@@ -56,17 +56,15 @@ export function DownloadProgress({
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center"
         >
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-success/10">
-            <CheckCircle2 className="h-7 w-7 text-success" />
+          <div className="bg-success/10 mb-4 flex h-14 w-14 items-center justify-center rounded-full">
+            <CheckCircle2 className="text-success h-7 w-7" />
           </div>
-          <h3 className="mb-1 text-lg font-semibold text-foreground">Ready to Download</h3>
-          <p className="mb-6 text-sm text-muted-foreground">
-            Your file is ready for download.
-          </p>
+          <h3 className="text-foreground mb-1 text-lg font-semibold">Ready to Download</h3>
+          <p className="text-muted-foreground mb-6 text-sm">Your file is ready for download.</p>
           <button
             onClick={onDownloadFile}
             disabled={isDownloadUrlPending}
-            className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-[#1D4ED8] disabled:opacity-50 active:scale-[0.98]"
+            className="bg-primary text-primary-foreground inline-flex h-10 items-center gap-2 rounded-lg px-6 text-sm font-medium shadow-sm transition-all hover:bg-[#1D4ED8] active:scale-[0.98] disabled:opacity-50"
           >
             {isDownloadUrlPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -77,23 +75,23 @@ export function DownloadProgress({
           </button>
         </motion.div>
       ) : (
-        <div className="flex flex-col items-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-            <Loader2 className="h-7 w-7 animate-spin text-primary" />
+        <div className="mt-4 flex flex-col items-center">
+          <div className="bg-primary/10 mb-4 flex h-14 w-14 items-center justify-center rounded-full">
+            <Loader2 className="text-primary h-7 w-7 animate-spin" />
           </div>
-          <h3 className="mb-1 text-lg font-semibold text-foreground">Processing...</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-foreground mb-1 text-lg font-semibold">Processing...</h3>
+          <p className="text-muted-foreground text-sm">
             {isPending ? "Starting download..." : `${progress}% complete`}
           </p>
-          <div className="mx-auto mt-5 h-2 w-full max-w-xs overflow-hidden rounded-full bg-muted">
+          <div className="bg-muted mx-auto mt-5 h-2 w-full max-w-xs overflow-hidden rounded-full">
             <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+              className="from-primary to-accent h-full rounded-full bg-gradient-to-r"
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.5, ease: "easeOut" }}
             />
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-3 text-xs">
             Please wait while we process your file
           </p>
         </div>
