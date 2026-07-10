@@ -24,7 +24,7 @@ export async function convertFile(
   outputFormat: string,
 ): Promise<ConversionResult> {
   if (!existsSync(inputPath)) {
-    throw new Error(`Input file not found: ${inputPath}`);
+    throw new Error("The downloaded file could not be found for conversion. Please try again.");
   }
 
   const baseName = inputPath.replace(/\.[^.]+$/, "");
@@ -60,12 +60,21 @@ export async function convertFile(
       } else {
         const errorMsg = stderr.slice(-2000);
         logger.error({ code, elapsed, stderr: errorMsg }, "Conversion failed");
-        reject(new Error(`FFmpeg exited with code ${code}`));
+
+        if (errorMsg.includes("Invalid data found when processing")) {
+          reject(new Error("The downloaded file appears to be corrupted. Please try again."));
+        } else if (errorMsg.includes("codec not supported") || errorMsg.includes("not implemented")) {
+          reject(new Error("The video format is not supported for conversion. Please try a different video."));
+        } else if (errorMsg.includes("No such file or directory")) {
+          reject(new Error("The downloaded file could not be found. Please try again."));
+        } else {
+          reject(new Error("Conversion failed. The file could not be processed. Please try again."));
+        }
       }
     });
 
-    proc.on("error", (err) => {
-      reject(new Error(`Failed to start FFmpeg: ${err.message}`));
+    proc.on("error", () => {
+      reject(new Error("Unable to start the conversion process. Please try again."));
     });
   });
 }

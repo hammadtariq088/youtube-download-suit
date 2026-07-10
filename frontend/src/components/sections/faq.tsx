@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 
 const faqs = [
-  { q: "Is this service free?", a: "Yes, the service is completely free to use with no limits on downloads. No sign-up or account required." },
-  { q: "What formats are supported?", a: "We support MP4 for video downloads and MP3 for audio extraction. Both formats are processed at the highest quality." },
-  { q: "Is there a limit on video length?", a: "There is no hard limit, but very long videos may take longer to process. Most standard YouTube videos process in seconds." },
-  { q: "Do you store downloaded videos?", a: "Files are temporarily stored for a limited time and are automatically deleted after download. We do not retain any of your data." },
-  { q: "Can I download age-restricted videos?", a: "We comply with YouTube's terms of service and applicable laws. Age-restricted and copyrighted content cannot be downloaded." },
+  { q: "Is this service free?", a: "Yes, the service is completely free with no limits on the number of downloads. No sign-up or account is required." },
+  { q: "What formats and quality are available?", a: "We support MP4 for video and MP3 for audio. The best available quality is selected automatically — there is no manual quality or resolution selector." },
+  { q: "Is there a download limit?", a: "There is no limit on how many videos you can download. However, videos must be under 4 hours in length and under 2GB in file size." },
+  { q: "How long are download links valid?", a: "Download links expire 10 minutes after processing. Files are stored temporarily in secure cloud storage and are automatically deleted after that window." },
+  { q: "What YouTube URLs are supported?", a: "Regular videos, Shorts, embeds, and live stream URLs all work. Playlists and channel pages are not supported." },
+  { q: "Can I download age-restricted or copyrighted content?", a: "No. Age-restricted videos and copyrighted content are not supported. The service complies with YouTube's terms of service." },
 ];
 
 function FaqItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boolean; onToggle: () => void }) {

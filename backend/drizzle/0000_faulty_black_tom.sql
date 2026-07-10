@@ -1,0 +1,11 @@
+ALTER TABLE "downloads" ADD COLUMN IF NOT EXISTS "youtube_video_id" varchar(20);
+ALTER TABLE "downloads" ADD COLUMN IF NOT EXISTS "description" text;
+ALTER TABLE "downloads" ADD COLUMN IF NOT EXISTS "channel_name" varchar(500);
+ALTER TABLE "downloads" ADD COLUMN IF NOT EXISTS "duration" integer;
+ALTER TABLE "downloads" ADD COLUMN IF NOT EXISTS "thumbnail" text;
+ALTER TABLE "downloads" ADD COLUMN IF NOT EXISTS "quality" varchar(20);
+ALTER TABLE "downloads" ADD COLUMN IF NOT EXISTS "file_name" text;
+ALTER TABLE "downloads" ADD COLUMN IF NOT EXISTS "file_extension" varchar(10);
+ALTER TABLE "downloads" ADD COLUMN IF NOT EXISTS "mime_type" varchar(100);
+ALTER TABLE "downloads" ADD COLUMN IF NOT EXISTS "r2_url" text;
+ALTER TABLE "downloads" ADD COLUMN IF NOT EXISTS "provider" varchar(20);

@@ -5,6 +5,22 @@ import { env } from "../config/env";
 import { logger } from "../config/logger";
 import type { VideoInfo } from "@yds/shared/types";
 
+const VIDEO_ID_PATTERNS = [
+  /(?:youtube\.com\/watch\?v=)([\w-]{11})/,
+  /(?:youtu\.be\/)([\w-]{11})/,
+  /(?:youtube\.com\/embed\/)([\w-]{11})/,
+  /(?:youtube\.com\/shorts\/)([\w-]{11})/,
+  /(?:youtube\.com\/live\/)([\w-]{11})/,
+];
+
+function extractVideoId(url: string): string | null {
+  for (const pattern of VIDEO_ID_PATTERNS) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
 function ensureTempDir(): void {
   if (!existsSync(env.TEMP_DOWNLOAD_DIR)) {
     spawn("mkdir", ["-p", env.TEMP_DOWNLOAD_DIR]);
@@ -111,7 +127,7 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
   });
 }
 
-function buildYtdlArgs(url: string, format: string): string[] {
+function buildYtdlArgs(url: string, format: string, videoId: string): string[] {
   const maxSizeBytes = env.MAX_FILE_SIZE_MB * 1024 * 1024;
   const args = [
     "--no-warnings",
@@ -120,7 +136,7 @@ function buildYtdlArgs(url: string, format: string): string[] {
     "--print",
     "after_move:filepath",
     "-o",
-    `${env.TEMP_DOWNLOAD_DIR}/%(id)s.%(ext)s`,
+    `${env.TEMP_DOWNLOAD_DIR}/${videoId}.%(ext)s`,
     "--retries",
     "10",
     "--retry-sleep",
@@ -146,13 +162,27 @@ function buildYtdlArgs(url: string, format: string): string[] {
   return args;
 }
 
+function awaitExistingFiles(dir: string, videoId: string, ext: string): string[] {
+  const results: string[] = [];
+  const expected = [`${videoId}.${ext}`, `${videoId}.m4a`, `${videoId}.webm`, `${videoId}.mkv`];
+  for (const name of expected) {
+    const p = path.join(dir, name);
+    if (existsSync(p)) results.push(p);
+  }
+  return results;
+}
+
 export async function downloadVideo(
   url: string,
   format: string,
 ): Promise<{ filePath: string; title: string }> {
   ensureTempDir();
 
-  const args = buildYtdlArgs(url, format);
+  const videoId = extractVideoId(url) || "video";
+  const ext = format === "mp3" ? "mp3" : "mp4";
+  const expectedPath = path.join(env.TEMP_DOWNLOAD_DIR, `${videoId}.${ext}`);
+
+  const args = buildYtdlArgs(url, format, videoId);
 
   logger.info({ url, format }, "Starting download");
 
@@ -162,11 +192,11 @@ export async function downloadVideo(
       stdio: ["ignore", "pipe", "pipe"],
     });
 
-    let output = "";
+    let stdout = "";
     let stderr = "";
 
     proc.stdout.on("data", (data: Buffer) => {
-      output += data.toString();
+      stdout += data.toString();
     });
 
     proc.stderr.on("data", (data: Buffer) => {
@@ -180,21 +210,48 @@ export async function downloadVideo(
     proc.on("close", (code) => {
       const elapsed = Date.now() - startTime;
       if (code === 0) {
-        const filename = output.trim().split("\n").pop() || "";
-        const filePath = path.join(env.TEMP_DOWNLOAD_DIR, path.basename(filename));
-        const title = path.basename(filename, path.extname(filename));
+        const printedPath = stdout.trim().split("\n").pop() || "";
+        if (printedPath && existsSync(printedPath)) {
+          logger.info({ filePath: printedPath, elapsed, format }, "Download completed");
+          return resolve({ filePath: printedPath, title: videoId });
+        }
 
-        logger.info({ filePath, elapsed, format }, "Download completed");
-        resolve({ filePath, title });
+        if (existsSync(expectedPath)) {
+          logger.info({ filePath: expectedPath, elapsed, format }, "Download completed (expected path)");
+          return resolve({ filePath: expectedPath, title: videoId });
+        }
+
+        const files = awaitExistingFiles(env.TEMP_DOWNLOAD_DIR, videoId, ext);
+        if (files.length > 0) {
+          logger.info({ filePath: files[0], elapsed, format }, "Download completed (scanned fallback)");
+          return resolve({ filePath: files[0], title: videoId });
+        }
+
+        reject(new Error("The download completed but the output file could not be found. Please try again."));
       } else {
         const errorMsg = stderr.slice(-2000);
         logger.error({ code, elapsed, stderr: errorMsg }, "Download failed");
-        reject(new Error(`yt-dlp exited with code ${code}`));
+
+        if (errorMsg.includes("Video unavailable") || errorMsg.includes("This video is not available")) {
+          reject(new Error("This video is unavailable or has been removed."));
+        } else if (errorMsg.includes("Sign in") || errorMsg.includes("login")) {
+          reject(new Error("This video requires sign-in and cannot be downloaded."));
+        } else if (errorMsg.includes("copyright") || errorMsg.includes("blocked")) {
+          reject(new Error("This video is copyright-restricted and cannot be downloaded."));
+        } else if (errorMsg.includes("Private video")) {
+          reject(new Error("This is a private video and cannot be downloaded."));
+        } else if (errorMsg.includes("Too many requests") || errorMsg.includes("429")) {
+          reject(new Error("Too many requests. Please wait a moment and try again."));
+        } else if (errorMsg.includes("No video formats")) {
+          reject(new Error("No downloadable formats found for this video."));
+        } else {
+          reject(new Error("Download failed. Please check the URL and try again."));
+        }
       }
     });
 
-    proc.on("error", (err) => {
-      reject(new Error(`Failed to start yt-dlp: ${err.message}`));
+    proc.on("error", () => {
+      reject(new Error("Unable to start the download process. Please try again."));
     });
   });
 }
@@ -205,6 +262,54 @@ function extractProgress(data: string): number | null {
     return parseFloat(match[1]);
   }
   return null;
+}
+
+export async function getVideoTitle(url: string): Promise<string> {
+  const args = [
+    "--print",
+    "title",
+    "--no-warnings",
+    "--no-playlist",
+    "--socket-timeout",
+    "15",
+    "--retries",
+    "3",
+  ];
+
+  addCookieArgs(args);
+  args.push(url);
+
+  return new Promise((resolve, reject) => {
+    const proc = spawn("yt-dlp", args, {
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env, LC_ALL: "en_US.UTF-8" },
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    proc.stdout.on("data", (data: Buffer) => {
+      stdout += data.toString();
+    });
+
+    proc.stderr.on("data", (data: Buffer) => {
+      stderr += data.toString();
+    });
+
+    proc.on("close", (code) => {
+      if (code === 0) {
+        const title = stdout.trim();
+        resolve(title || "untitled");
+      } else {
+        const msg = stderr.slice(0, 500);
+        reject(new Error(`yt-dlp title fetch failed (${code}): ${msg}`));
+      }
+    });
+
+    proc.on("error", (err) => {
+      reject(new Error(`Failed to spawn yt-dlp for title: ${err.message}`));
+    });
+  });
 }
 
 export function getYtdlpVersion(): string {
