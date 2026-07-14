@@ -59,29 +59,35 @@ export function HomePage() {
 
   const downloadStatus = useDownloadStatus(downloadId);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    setUrlError("");
-    setDownloadId(null);
-    downloadMutation.reset();
-    downloadUrlMutation.reset();
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      setUrlError("");
+      setDownloadId(null);
+      downloadMutation.reset();
+      downloadUrlMutation.reset();
 
-    if (!url.trim()) {
-      setUrlError("Please enter a YouTube URL");
-      return;
-    }
+      if (!url.trim()) {
+        setUrlError("Please enter a YouTube URL");
+        return;
+      }
 
-    if (!isValidYoutubeUrl(url.trim())) {
-      setUrlError("Please enter a valid YouTube URL");
-      return;
-    }
+      if (!isValidYoutubeUrl(url.trim())) {
+        setUrlError("Please enter a valid YouTube URL");
+        return;
+      }
 
-    videoInfoMutation.mutate(url.trim());
-  }, [url, videoInfoMutation, downloadMutation, downloadUrlMutation]);
+      videoInfoMutation.mutate(url.trim());
+    },
+    [url, videoInfoMutation, downloadMutation, downloadUrlMutation],
+  );
 
-  const handleDownload = useCallback((format: "mp4" | "mp3") => {
-    downloadMutation.mutate({ url: url.trim(), format });
-  }, [url, downloadMutation]);
+  const handleDownload = useCallback(
+    (format: "mp4" | "mp3") => {
+      downloadMutation.mutate({ url: url.trim(), format });
+    },
+    [url, downloadMutation],
+  );
 
   const handleReset = useCallback(() => {
     videoInfoMutation.reset();
@@ -90,15 +96,19 @@ export function HomePage() {
     setDownloadId(null);
   }, [videoInfoMutation, downloadMutation, downloadUrlMutation]);
 
-  const handleUrlChange = useCallback((value: string) => {
-    setUrl(value);
-    if (urlError) setUrlError("");
-  }, [urlError]);
+  const handleUrlChange = useCallback(
+    (value: string) => {
+      setUrl(value);
+      if (urlError) setUrlError("");
+    },
+    [urlError],
+  );
 
   const videoInfo = videoInfoMutation.data;
   const downloadData = downloadStatus.data;
   const isCompleted = downloadData?.status === "completed";
-  const isFailed = downloadData?.status === "failed" || downloadMutation.isError;
+  const isFailed =
+    downloadData?.status === "failed" || downloadMutation.isError;
 
   return (
     <main>
@@ -110,16 +120,18 @@ export function HomePage() {
         onSubmit={handleSubmit}
       />
 
-      <section className="mx-auto max-w-3xl px-4 pb-20">
+      <section className="mx-auto max-w-2xl px-5 pb-20 sm:pb-28">
         <AnimatePresence mode="wait">
           {videoInfoMutation.isPending && <VideoSkeleton />}
 
           {videoInfoMutation.error && !downloadId && (
-            <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-8 text-center">
-              <p className="text-sm text-destructive">{videoInfoMutation.error.message}</p>
+            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-8 text-center">
+              <p className="text-sm text-destructive">
+                {videoInfoMutation.error.message}
+              </p>
               <button
                 onClick={handleReset}
-                className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-5 text-sm font-medium text-foreground shadow-sm transition-all hover:bg-secondary active:scale-[0.98]"
+                className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-5 text-sm font-medium text-foreground shadow-sm transition-all hover:bg-secondary active:scale-[0.97]"
               >
                 Try Again
               </button>
@@ -141,9 +153,15 @@ export function HomePage() {
               isFailed={isFailed}
               isCompleted={isCompleted}
               progress={downloadData?.progress || 0}
-              errorMessage={downloadData?.errorMessage || downloadMutation.error?.message || null}
+              errorMessage={
+                downloadData?.errorMessage ||
+                downloadMutation.error?.message ||
+                null
+              }
               isDownloadUrlPending={downloadUrlMutation.isPending}
-              onDownloadFile={() => downloadId && downloadUrlMutation.mutate(downloadId)}
+              onDownloadFile={() =>
+                downloadId && downloadUrlMutation.mutate(downloadId)
+              }
               onReset={handleReset}
             />
           )}

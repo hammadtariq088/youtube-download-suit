@@ -10,35 +10,40 @@ interface VideoInfoCardProps {
   error: Error | null;
 }
 
-export function VideoInfoCard({ videoInfo, isDownloadPending, onDownload, error }: VideoInfoCardProps) {
+export function VideoInfoCard({
+  videoInfo,
+  isDownloadPending,
+  onDownload,
+  error,
+}: VideoInfoCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       className="space-y-4"
     >
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <div className="flex flex-col md:flex-row">
-          <div className="relative aspect-video w-full md:w-72 shrink-0">
+          <div className="relative aspect-video w-full shrink-0 overflow-hidden md:w-80">
             <img
               src={videoInfo.thumbnail}
               alt={videoInfo.title}
               className="h-full w-full object-cover"
               loading="lazy"
             />
-            <div className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
+            <div className="absolute bottom-2.5 right-2.5 rounded-lg bg-black/75 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
               {formatDuration(videoInfo.duration)}
             </div>
           </div>
-          <div className="flex flex-1 flex-col justify-center p-5 md:p-6">
-            <h2 className="mb-2 line-clamp-2 text-base font-semibold text-foreground sm:text-lg">
+          <div className="flex flex-1 flex-col justify-center gap-3 p-5 sm:p-6">
+            <h2 className="line-clamp-2 text-base font-semibold leading-snug text-foreground sm:text-lg">
               {videoInfo.title}
             </h2>
-            <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+            <p className="line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">
               {videoInfo.description}
             </p>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5" />
                 {videoInfo.uploader}
@@ -56,11 +61,11 @@ export function VideoInfoCard({ videoInfo, isDownloadPending, onDownload, error 
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex gap-3">
         <button
           onClick={() => onDownload("mp4")}
           disabled={isDownloadPending}
-          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-[#1D4ED8] disabled:opacity-50 active:scale-[0.98]"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
         >
           <Download className="h-4 w-4" />
           Download MP4
@@ -68,7 +73,7 @@ export function VideoInfoCard({ videoInfo, isDownloadPending, onDownload, error 
         <button
           onClick={() => onDownload("mp3")}
           disabled={isDownloadPending}
-          className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-card px-6 py-3 text-sm font-medium text-foreground shadow-sm transition-all hover:bg-secondary disabled:opacity-50 active:scale-[0.98]"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 text-sm font-medium text-foreground shadow-sm transition-all duration-150 hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
         >
           <Download className="h-4 w-4" />
           Download MP3
