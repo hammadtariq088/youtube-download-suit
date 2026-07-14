@@ -2,12 +2,11 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "..",
-    "noEmit": true,
+    "rootDir": "src",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "target": "ES2022",
     "types": ["node"]
   },
-  "include": ["src", "../backend/src/db/schema"]
+  "include": ["src"]
 }

@@ -4,31 +4,27 @@ import { Zap, Shield, Globe, Sparkles } from "lucide-react";
 const features = [
   {
     icon: Zap,
-    title: "Fast Processing",
-    description: "Powered by yt-dlp with smart Redis caching. Videos you request are often served instantly without re-processing.",
-    gradient: "from-primary/20 to-primary/5",
-    iconColor: "text-primary",
+    title: "Lightning Fast",
+    description:
+      "Powered by yt-dlp with smart caching. Videos you request are often served instantly.",
   },
   {
     icon: Sparkles,
     title: "Best Quality Auto-Selected",
-    description: "No need to pick resolutions — we automatically grab the best available MP4 stream and highest quality MP3 audio.",
-    gradient: "from-accent/20 to-accent/5",
-    iconColor: "text-accent",
+    description:
+      "No need to pick resolutions — we automatically grab the best available quality.",
   },
   {
     icon: Shield,
     title: "Private by Design",
-    description: "No accounts, no tracking, no data retention. Files are deleted 10 minutes after processing. End-to-end encrypted transfers via HTTPS and signed URLs.",
-    gradient: "from-success/20 to-success/5",
-    iconColor: "text-success",
+    description:
+      "No accounts, no tracking. Files are deleted after processing. HTTPS and signed URLs throughout.",
   },
   {
     icon: Globe,
     title: "Free & Unlimited",
-    description: "No sign-ups, no hidden fees, no daily caps. Download as many videos as you want, completely free.",
-    gradient: "from-primary/20 to-accent/5",
-    iconColor: "text-primary",
+    description:
+      "No sign-ups, no hidden fees, no daily caps. Download as many videos as you want.",
   },
 ];
 
@@ -36,36 +32,35 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 },
+    transition: { staggerChildren: 0.08 },
   },
 };
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: "easeOut" as const },
+    transition: { duration: 0.4, ease: "easeOut" as const },
   },
 };
 
 export function Features() {
   return (
-    <section id="features" className="border-t border-border/50 bg-secondary/50 px-4 py-20">
-      <div className="mx-auto max-w-6xl">
+    <section id="features" className="border-y border-border bg-secondary/50 px-5 py-24">
+      <div className="mx-auto max-w-5xl">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.5 }}
-          className="mb-12 text-center"
+          transition={{ duration: 0.4 }}
+          className="mb-14 text-center"
         >
-          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Why Choose{" "}
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">YDS</span>
+          <h2 className="mb-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            Why Choose YDS
           </h2>
-          <p className="mx-auto mt-3 max-w-lg text-muted-foreground">
-            Everything you need for downloading YouTube content — built for speed, quality, and privacy.
+          <p className="mx-auto max-w-md text-base text-muted-foreground">
+            Built for speed, quality, and privacy.
           </p>
         </motion.div>
 
@@ -74,7 +69,7 @@ export function Features() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
-          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
           {features.map((feature) => {
             const Icon = feature.icon;
@@ -82,18 +77,17 @@ export function Features() {
               <motion.div
                 key={feature.title}
                 variants={cardVariants}
-                className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+                className="group rounded-xl border border-border bg-card p-6 transition-all duration-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:-translate-y-0.5"
               >
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 transition-opacity group-hover:opacity-100`}
-                />
-                <div className="relative">
-                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-secondary">
-                    <Icon className={`h-5 w-5 ${feature.iconColor}`} />
-                  </div>
-                  <h3 className="mb-2 text-base font-semibold text-foreground">{feature.title}</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Icon className="h-5 w-5 text-primary" />
                 </div>
+                <h3 className="mb-1.5 text-sm font-semibold text-foreground">
+                  {feature.title}
+                </h3>
+                <p className="text-[13px] leading-relaxed text-muted-foreground">
+                  {feature.description}
+                </p>
               </motion.div>
             );
           })}

@@ -5,7 +5,7 @@ import { JobStatus } from "@yds/shared/types";
 import { getRedis } from "../config/redis";
 import { db } from "../config/db";
 import { logger } from "../config/logger";
-import { downloads, jobs, settings } from "../../../backend/src/db/schema";
+import { downloads, jobs, settings } from "@yds/shared/db/schema";
 import { downloadVideo, getVideoTitle, updateYtdlp } from "../services/youtube.service";
 import { convertFile } from "../services/convert.service";
 import { uploadFile } from "../services/upload.service";
