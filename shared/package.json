@@ -2,16 +2,34 @@
   "name": "@yds/shared",
   "version": "1.0.0",
   "private": true,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./types": "./src/types/index.ts",
-    "./constants": "./src/constants/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js"
+    },
+    "./constants": {
+      "types": "./dist/constants/index.d.ts",
+      "import": "./dist/constants/index.js"
+    },
+    "./db/schema": {
+      "types": "./dist/db/schema/index.d.ts",
+      "import": "./dist/db/schema/index.js"
+    }
   },
   "scripts": {
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.43.1"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

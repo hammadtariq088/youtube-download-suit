@@ -16,17 +16,10 @@ const envSchema = z.object({
   R2_PUBLIC_URL: z.string().url().optional(),
   R2_SIGNED_URL_EXPIRY: z.coerce.number().default(600),
 
-  JWT_SECRET: z.string().min(32),
-  JWT_EXPIRY_SECONDS: z.coerce.number().default(86400),
-  ADMIN_EMAIL: z.string().email(),
-  ADMIN_PASSWORD: z.string().min(8),
-
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
 
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
-
-  WORKER_API_KEY: z.string().min(1),
 
   MAX_DURATION_SECONDS: z.coerce.number().default(14400),
   MAX_FILE_SIZE_MB: z.coerce.number().default(2048),

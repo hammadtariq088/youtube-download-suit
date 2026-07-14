@@ -1,5 +1,5 @@
 import { db } from "../config/db";
-import { settings } from "../../../backend/src/db/schema";
+import { settings } from "@yds/shared/db/schema";
 import { updateYtdlp, getYtdlpVersion } from "../services/youtube.service";
 import { logger } from "../config/logger";
 import { YTDLP_UPDATE_INTERVAL_MS } from "@yds/shared/constants";

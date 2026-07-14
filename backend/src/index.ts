@@ -9,6 +9,9 @@ import { healthRouter } from "./routes/health.routes";
 import { videoRouter } from "./routes/video.routes";
 import { downloadRouter } from "./routes/download.routes";
 import { generalRateLimiter } from "./middleware/rate-limiter";
+import { runMigrations, closeConnection } from "./db/migrate";
+import { closeQueues } from "./queue/producer";
+import { closeRedis } from "./config/redis";
 
 const app = express();
 
@@ -24,15 +27,59 @@ app.use("/api/download", downloadRouter);
 
 app.use(errorHandler);
 
+let server: ReturnType<typeof express.prototype.listen> | null = null;
+let shuttingDown = false;
+
+async function shutdown(): Promise<void> {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
+  logger.info("Shutting down backend API...");
+
+  if (server) {
+    server.close(() => {
+      logger.info("HTTP server closed");
+    });
+  }
+
+  try {
+    await closeQueues();
+    logger.info("Queues closed");
+  } catch (error) {
+    logger.error({ err: error }, "Error closing queues");
+  }
+
+  try {
+    await closeRedis();
+    logger.info("Redis connection closed");
+  } catch (error) {
+    logger.error({ err: error }, "Error closing Redis");
+  }
+
+  try {
+    await closeConnection();
+    logger.info("Database connection closed");
+  } catch (error) {
+    logger.error({ err: error }, "Error closing database");
+  }
+
+  logger.info("Shutdown complete");
+  process.exit(0);
+}
+
 async function start(): Promise<void> {
   try {
-    app.listen(env.PORT, () => {
-      logger.info({ port: env.PORT, nodeEnv: env.NODE_ENV }, "Backend API server started");
-    });
+    await runMigrations();
   } catch (error) {
-    logger.fatal({ err: error }, "Failed to start server");
-    process.exit(1);
+    logger.error({ err: error }, "Migration failed, starting anyway");
   }
+
+  server = app.listen(env.PORT, () => {
+    logger.info({ port: env.PORT, nodeEnv: env.NODE_ENV }, "Backend API server started");
+  });
+
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
 }
 
 start();
