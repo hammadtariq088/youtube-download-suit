@@ -2,16 +2,16 @@ import express from "express";
 import helmet from "helmet";
 import compression from "compression";
 import cors from "cors";
-import { env } from "./config/env";
-import { logger } from "./config/logger";
-import { errorHandler } from "./middleware/error-handler";
-import { healthRouter } from "./routes/health.routes";
-import { videoRouter } from "./routes/video.routes";
-import { downloadRouter } from "./routes/download.routes";
-import { generalRateLimiter } from "./middleware/rate-limiter";
-import { runMigrations, closeConnection } from "./db/migrate";
-import { closeQueues } from "./queue/producer";
-import { closeRedis } from "./config/redis";
+import { env } from "./config/env.js";
+import { logger } from "./config/logger.js";
+import { errorHandler } from "./middleware/error-handler.js";
+import { healthRouter } from "./routes/health.routes.js";
+import { videoRouter } from "./routes/video.routes.js";
+import { downloadRouter } from "./routes/download.routes.js";
+import { generalRateLimiter } from "./middleware/rate-limiter.js";
+import { runMigrations, closeConnection } from "./db/migrate.js";
+import { closeQueues } from "./queue/producer.js";
+import { closeRedis } from "./config/redis.js";
 
 const app = express();
 

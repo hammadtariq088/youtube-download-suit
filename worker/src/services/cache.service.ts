@@ -1,6 +1,6 @@
 import type { Redis } from "ioredis";
 import type { VideoMetadataResult } from "@yds/shared/types";
-import { logger } from "../config/logger";
+import { logger } from "../config/logger.js";
 
 export class MetadataCache {
   private readonly prefix = "metadata:";

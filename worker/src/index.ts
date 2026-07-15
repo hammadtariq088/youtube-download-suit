@@ -1,9 +1,9 @@
-import { logger } from "./config/logger";
-import { getWorkers, closeWorkers } from "./queue/consumers";
-import { closeRedis } from "./config/redis";
-import { startYtdlpUpdater, stopYtdlpUpdater, seedYtdlpVersion } from "./updater/ytdlp";
-import { env } from "./config/env";
-import { sql } from "./config/db";
+import { logger } from "./config/logger.js";
+import { getWorkers, closeWorkers } from "./queue/consumers.js";
+import { closeRedis } from "./config/redis.js";
+import { startYtdlpUpdater, stopYtdlpUpdater, seedYtdlpVersion } from "./updater/ytdlp.js";
+import { env } from "./config/env.js";
+import { sql } from "./config/db.js";
 
 const DB_RETRY_MAX_ATTEMPTS = 5;
 const DB_RETRY_BASE_DELAY_MS = 2000;

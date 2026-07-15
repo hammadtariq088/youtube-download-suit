@@ -1,8 +1,8 @@
 import { spawn, execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { env } from "../config/env";
-import { logger } from "../config/logger";
+import { env } from "../config/env.js";
+import { logger } from "../config/logger.js";
 import type { VideoInfo } from "@yds/shared/types";
 
 const VIDEO_ID_PATTERNS = [

@@ -2,11 +2,11 @@ import type { Request, Response, NextFunction } from "express";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { eq } from "drizzle-orm";
-import { db } from "../config/db";
-import { r2Client, R2_CONFIG } from "../config/r2";
-import { downloads } from "../db/schema";
-import { AppError } from "../middleware/error-handler";
-import { logger } from "../config/logger";
+import { db } from "../config/db.js";
+import { r2Client, R2_CONFIG } from "../config/r2.js";
+import { downloads } from "../db/schema/index.js";
+import { AppError } from "../middleware/error-handler.js";
+import { logger } from "../config/logger.js";
 import { JobStatus } from "@yds/shared/types";
 
 export const downloadController = {

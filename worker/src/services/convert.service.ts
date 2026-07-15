@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { logger } from "../config/logger";
+import { logger } from "../config/logger.js";
 
 export interface ConversionResult {
   outputPath: string;

@@ -1,13 +1,13 @@
 import type { Request, Response, NextFunction } from "express";
-import { videoInfoQueue, downloadQueue, videoInfoQueueEvents } from "../queue/producer";
-import { logger } from "../config/logger";
-import { db } from "../config/db";
-import { downloads, jobs } from "../db/schema";
-import { AppError } from "../middleware/error-handler";
+import { videoInfoQueue, downloadQueue, videoInfoQueueEvents } from "../queue/producer.js";
+import { logger } from "../config/logger.js";
+import { db } from "../config/db.js";
+import { downloads, jobs } from "../db/schema/index.js";
+import { AppError } from "../middleware/error-handler.js";
 import { JobStatus } from "@yds/shared/types";
 import type { DownloadFormat, VideoMetadataResult, VideoInfo } from "@yds/shared/types";
-import { getRedis } from "../config/redis";
-import { env } from "../config/env";
+import { getRedis } from "../config/redis.js";
+import { env } from "../config/env.js";
 
 function extractVideoIdFromUrl(url: string): string | null {
   const patterns = [

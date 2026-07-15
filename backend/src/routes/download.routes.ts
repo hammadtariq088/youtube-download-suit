@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { downloadController } from "../controllers/download.controller";
-import { pollRateLimiter } from "../middleware/rate-limiter";
+import { downloadController } from "../controllers/download.controller.js";
+import { pollRateLimiter } from "../middleware/rate-limiter.js";
 
 export const downloadRouter = Router();
 

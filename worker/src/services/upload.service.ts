@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { r2Client, R2_CONFIG } from "../config/r2";
-import { logger } from "../config/logger";
-import { sanitizeFilename } from "../utils/filename";
+import { r2Client, R2_CONFIG } from "../config/r2.js";
+import { logger } from "../config/logger.js";
+import { sanitizeFilename } from "../utils/filename.js";
 
 const UPLOAD_TIMEOUT_MS = 300_000;
 
