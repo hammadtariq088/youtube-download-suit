@@ -15,6 +15,8 @@ import { closeRedis } from "./config/redis.js";
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(helmet());
 app.use(compression());
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));

@@ -24,7 +24,7 @@ function extractVideoIdFromUrl(url: string): string | null {
   return null;
 }
 
-async function waitForVideoInfo(url: string, timeoutMs = 120000): Promise<VideoMetadataResult> {
+async function waitForVideoInfo(url: string, timeoutMs = 180_000): Promise<VideoMetadataResult> {
   const job = await videoInfoQueue.add(
     "video-info",
     { url },

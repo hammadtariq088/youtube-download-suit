@@ -25,7 +25,7 @@ function createWorker<T>(queueName: string, handler: (job: any) => Promise<T>): 
   const worker = new Worker(queueName, handler, {
     connection: getRedis(),
     concurrency: env.WORKER_CONCURRENCY,
-    lockDuration: 120_000,
+    lockDuration: 180_000,
     stalledInterval: 60_000,
   });
 
