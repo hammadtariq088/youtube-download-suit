@@ -1,7 +1,7 @@
 import { Queue, QueueEvents } from "bullmq";
 import { QUEUES } from "@yds/shared/constants";
-import { getRedis } from "../config/redis";
-import { logger } from "../config/logger";
+import { getRedis } from "../config/redis.js";
+import { logger } from "../config/logger.js";
 
 function createQueue(name: string): Queue {
   const queue = new Queue(name, {

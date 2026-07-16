@@ -2,18 +2,18 @@ import { Worker } from "bullmq";
 import { eq } from "drizzle-orm";
 import { QUEUES } from "@yds/shared/constants";
 import { JobStatus } from "@yds/shared/types";
-import { getRedis } from "../config/redis";
-import { db } from "../config/db";
-import { logger } from "../config/logger";
+import { getRedis } from "../config/redis.js";
+import { db } from "../config/db.js";
+import { logger } from "../config/logger.js";
 import { downloads, jobs, settings } from "@yds/shared/db/schema";
-import { downloadVideo, getVideoTitle, updateYtdlp } from "../services/youtube.service";
-import { convertFile } from "../services/convert.service";
-import { uploadFile } from "../services/upload.service";
-import { cleanupSingleFile } from "../services/cleanup.service";
-import { createMetadataService } from "../services/metadata.service";
-import { env } from "../config/env";
+import { downloadVideo, getVideoTitle, updateYtdlp } from "../services/youtube.service.js";
+import { convertFile } from "../services/convert.service.js";
+import { uploadFile } from "../services/upload.service.js";
+import { cleanupSingleFile } from "../services/cleanup.service.js";
+import { createMetadataService } from "../services/metadata.service.js";
+import { env } from "../config/env.js";
 import type { VideoInfo } from "@yds/shared/types";
-import { sanitizeFilename } from "../utils/filename";
+import { sanitizeFilename } from "../utils/filename.js";
 
 const metadataService = createMetadataService(
   getRedis,
@@ -25,7 +25,7 @@ function createWorker<T>(queueName: string, handler: (job: any) => Promise<T>): 
   const worker = new Worker(queueName, handler, {
     connection: getRedis(),
     concurrency: env.WORKER_CONCURRENCY,
-    lockDuration: 120_000,
+    lockDuration: 180_000,
     stalledInterval: 60_000,
   });
 

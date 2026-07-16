@@ -4,7 +4,7 @@ import { z } from "zod";
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   WORKER_ID: z.string().default("worker-1"),
-  WORKER_CONCURRENCY: z.coerce.number().default(3),
+  WORKER_CONCURRENCY: z.coerce.number().default(1),
   TEMP_DOWNLOAD_DIR: z.string().default("/tmp/yds-downloads"),
 
   DATABASE_URL: z.string().url(),

@@ -1,3 +1,3 @@
-export * from "./types";
-export * from "./constants";
-export * as schema from "./db/schema";
+export * from "./types/index.js";
+export * from "./constants/index.js";
+export * as schema from "./db/schema/index.js";

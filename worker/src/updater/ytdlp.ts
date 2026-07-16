@@ -1,7 +1,7 @@
-import { db } from "../config/db";
+import { db } from "../config/db.js";
 import { settings } from "@yds/shared/db/schema";
-import { updateYtdlp, getYtdlpVersion } from "../services/youtube.service";
-import { logger } from "../config/logger";
+import { updateYtdlp, getYtdlpVersion } from "../services/youtube.service.js";
+import { logger } from "../config/logger.js";
 import { YTDLP_UPDATE_INTERVAL_MS } from "@yds/shared/constants";
 
 let updateInterval: ReturnType<typeof setInterval> | null = null;

@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { MetadataService, MetadataServiceError } from "../metadata.service";
-import { MetadataCache } from "../cache.service";
-import { ApifyService } from "../apify.service";
+import { MetadataService, MetadataServiceError } from "../metadata.service.js";
+import { MetadataCache } from "../cache.service.js";
+import { ApifyService } from "../apify.service.js";
 import type { VideoInfo, VideoMetadataResult } from "@yds/shared/types";
 
 vi.mock("../youtube.service", () => ({
   getVideoInfo: vi.fn(),
 }));
 
-import { getVideoInfo } from "../youtube.service";
+import { getVideoInfo } from "../youtube.service.js";
 
 const VALID_ID = "LXb3EKWsInQ";
 const CACHED_ID = "cached-id-11";

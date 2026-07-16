@@ -1,6 +1,6 @@
 import type { VideoInfo } from "@yds/shared/types";
-import { logger } from "../config/logger";
-import { withRetry } from "../utils/retry";
+import { logger } from "../config/logger.js";
+import { withRetry } from "../utils/retry.js";
 
 export const DEFAULT_APIFY_ACTOR_ID = "nFATNwHCkQv3c3H9cn";
 const APIFY_BASE_URL = "https://api.apify.com/v2";

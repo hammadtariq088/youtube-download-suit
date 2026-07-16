@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
-import { getRedis } from "../config/redis";
-import { logger } from "../config/logger";
-import { env } from "../config/env";
-import { sql } from "../config/db";
-import { videoInfoQueue, downloadQueue, cleanupQueue } from "../queue/producer";
+import { getRedis } from "../config/redis.js";
+import { logger } from "../config/logger.js";
+import { env } from "../config/env.js";
+import { sql } from "../config/db.js";
+import { videoInfoQueue, downloadQueue, cleanupQueue } from "../queue/producer.js";
 
 async function checkDb(): Promise<boolean> {
   try {

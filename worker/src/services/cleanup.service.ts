@@ -1,8 +1,8 @@
 import { readdir, unlink } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { env } from "../config/env";
-import { logger } from "../config/logger";
+import { env } from "../config/env.js";
+import { logger } from "../config/logger.js";
 
 export async function cleanupDirectory(dirPath: string = env.TEMP_DOWNLOAD_DIR): Promise<number> {
   if (!existsSync(dirPath)) {

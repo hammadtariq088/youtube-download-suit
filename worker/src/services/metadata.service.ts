@@ -1,10 +1,10 @@
 import type { VideoMetadataResult } from "@yds/shared/types";
 import { SUPPORTED_URL_PATTERNS } from "@yds/shared/constants";
-import { getVideoInfo } from "./youtube.service";
-import { ApifyService } from "./apify.service";
-import { MetadataCache } from "./cache.service";
+import { getVideoInfo } from "./youtube.service.js";
+import { ApifyService } from "./apify.service.js";
+import { MetadataCache } from "./cache.service.js";
 import type { Redis } from "ioredis";
-import { logger } from "../config/logger";
+import { logger } from "../config/logger.js";
 
 export class MetadataServiceError extends Error {
   constructor(
