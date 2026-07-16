@@ -13,7 +13,7 @@ module.exports = {
       log_date_format: "YYYY-MM-DD HH:mm:ss Z",
       env: {
         NODE_ENV: "production",
-        WORKER_CONCURRENCY: "1",
+        WORKER_CONCURRENCY: "8",
       },
       env_file: ".env",
     },
