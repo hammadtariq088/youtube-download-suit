@@ -34,34 +34,29 @@ export function Header() {
     };
   }, [mobileOpen]);
 
-  const scrollTo = useCallback(
-    (e: React.MouseEvent, id: string) => {
-      e.preventDefault();
-      setMobileOpen(false);
-      requestAnimationFrame(() => {
-        const el = document.querySelector(id);
-        if (el) el.scrollIntoView({ behavior: "smooth" });
-      });
-    },
-    [],
-  );
+  const scrollTo = useCallback((e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    setMobileOpen(false);
+    requestAnimationFrame(() => {
+      const el = document.querySelector(id);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    });
+  }, []);
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "border-b border-border/60 bg-background/80 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] backdrop-blur-xl"
+          ? "border-border/60 bg-background/80 border-b shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] backdrop-blur-xl"
           : "bg-transparent"
       }`}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-6 lg:px-8">
-        <a href="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm shadow-primary/20 transition-shadow group-hover:shadow-md group-hover:shadow-primary/30">
+        <a href="/" className="group flex items-center gap-2.5">
+          <div className="bg-primary shadow-primary/20 group-hover:shadow-primary/30 flex h-8 w-8 items-center justify-center rounded-lg shadow-sm transition-shadow group-hover:shadow-md">
             <Download className="h-4 w-4 text-white" />
           </div>
-          <span className="text-lg font-bold tracking-tight text-foreground">
-            YDS
-          </span>
+          <span className="text-foreground text-lg font-bold tracking-tight">YDS</span>
         </a>
 
         <nav className="hidden items-center gap-1 md:flex">
@@ -70,16 +65,16 @@ export function Header() {
               key={link.href}
               href={link.href}
               onClick={(e) => scrollTo(e, link.href)}
-              className="rounded-lg px-3.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg px-3.5 py-2 text-[13px] font-medium transition-colors"
             >
               {link.label}
             </a>
           ))}
-          <div className="ml-3 h-4 w-px bg-border" />
+          <div className="bg-border ml-3 h-4 w-px" />
           <a
             href="#hero"
             onClick={(e) => scrollTo(e, "#hero")}
-            className="ml-3 inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[13px] font-semibold text-white shadow-sm shadow-primary/20 transition-all duration-150 hover:bg-primary-hover hover:shadow-md hover:shadow-primary/25 active:scale-[0.97]"
+            className="bg-primary shadow-primary/20 hover:bg-primary-hover hover:shadow-primary/25 ml-3 inline-flex h-9 items-center gap-2 rounded-lg px-4 text-[13px] font-semibold text-white shadow-sm transition-all duration-150 hover:shadow-md active:scale-[0.97]"
           >
             <Download className="h-3.5 w-3.5" />
             Get Started
@@ -88,22 +83,22 @@ export function Header() {
 
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="relative z-50 flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-muted md:hidden"
+          className="hover:bg-muted relative z-50 flex h-10 w-10 items-center justify-center rounded-lg transition-colors md:hidden"
           aria-label="Toggle menu"
         >
           <div className="relative h-5 w-5">
             <span
-              className={`absolute left-0 h-[1.5px] w-5 bg-foreground transition-all duration-300 ${
+              className={`bg-foreground absolute left-0 h-[1.5px] w-5 transition-all duration-300 ${
                 mobileOpen ? "top-[11px] rotate-45" : "top-1"
               }`}
             />
             <span
-              className={`absolute left-0 top-[11px] h-[1.5px] w-5 bg-foreground transition-all duration-200 ${
+              className={`bg-foreground absolute top-[11px] left-0 h-[1.5px] w-5 transition-all duration-200 ${
                 mobileOpen ? "opacity-0" : "opacity-100"
               }`}
             />
             <span
-              className={`absolute left-0 h-[1.5px] w-5 bg-foreground transition-all duration-300 ${
+              className={`bg-foreground absolute left-0 h-[1.5px] w-5 transition-all duration-300 ${
                 mobileOpen ? "top-[11px] -rotate-45" : "top-[21px]"
               }`}
             />
@@ -127,7 +122,7 @@ export function Header() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="fixed top-16 left-0 right-0 z-40 border-b border-border/60 bg-background/95 shadow-lg shadow-black/[0.04] backdrop-blur-xl md:hidden"
+              className="border-border/60 bg-background/95 fixed top-16 right-0 left-0 z-40 border-b shadow-lg shadow-black/[0.04] backdrop-blur-xl md:hidden"
             >
               <nav className="flex flex-col gap-1 p-4">
                 {navLinks.map((link, i) => (
@@ -138,19 +133,19 @@ export function Header() {
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05, duration: 0.2 }}
-                    className="rounded-xl px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                    className="text-foreground hover:bg-muted rounded-xl px-4 py-3 text-sm font-medium transition-colors"
                   >
                     {link.label}
                   </motion.a>
                 ))}
-                <div className="my-1 h-px bg-border" />
+                <div className="bg-border my-1 h-px" />
                 <motion.a
                   href="#hero"
                   onClick={(e) => scrollTo(e, "#hero")}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: navLinks.length * 0.05, duration: 0.2 }}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.97]"
+                  className="bg-primary shadow-primary/20 hover:bg-primary-hover flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all active:scale-[0.97]"
                 >
                   <Download className="h-4 w-4" />
                   Get Started
